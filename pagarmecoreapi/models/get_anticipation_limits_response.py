@@ -15,8 +15,8 @@ class GetAnticipationLimitsResponse(object):
     Anticipation limits
 
     Attributes:
-        max (GetAnticipationLimitResponse): Max limit
-        min (GetAnticipationLimitResponse): Min limit
+        max (GetAnticipationLimitResponse): Anticipation limit
+        min (GetAnticipationLimitResponse): Anticipation limit
 
     """
 

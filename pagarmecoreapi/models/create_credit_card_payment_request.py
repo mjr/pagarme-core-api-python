@@ -20,7 +20,7 @@ class CreateCreditCardPaymentRequest(object):
         installments (int): Number of installments
         statement_descriptor (string): The text that will be shown on the
             credit card's statement
-        card (CreateCardRequest): Credit card data
+        card (CreateCardRequest): Card data
         card_id (string): The credit card id
         card_token (string): TODO: type description here.
         recurrence (bool): Indicates a recurrence
@@ -32,11 +32,13 @@ class CreateCreditCardPaymentRequest(object):
         merchant_category_code (long|int): Customer business segment code
         authentication (CreatePaymentAuthenticationRequest): The payment
             authentication request
-        contactless (CreateCardPaymentContactlessRequest): The Credit card
-            payment contactless request
+        contactless (CreateCardPaymentContactlessRequest): The card payment
+            contactless request
         auto_recovery (bool): Indicates whether a particular payment will
             enter the offline retry flow
         operation_type (string): AuthOnly, AuthAndCapture, PreAuth
+        recurrency_cycle (string): Defines whether the card has been used one
+            or more times.
 
     """
 
@@ -55,7 +57,8 @@ class CreateCreditCardPaymentRequest(object):
         "authentication":'authentication',
         "contactless":'contactless',
         "auto_recovery":'auto_recovery',
-        "operation_type":'operation_type'
+        "operation_type":'operation_type',
+        "recurrency_cycle":'recurrency_cycle'
     }
 
     def __init__(self,
@@ -72,7 +75,8 @@ class CreateCreditCardPaymentRequest(object):
                  authentication=None,
                  contactless=None,
                  auto_recovery=None,
-                 operation_type=None):
+                 operation_type=None,
+                 recurrency_cycle=None):
         """Constructor for the CreateCreditCardPaymentRequest class"""
 
         # Initialize members of the class
@@ -90,6 +94,7 @@ class CreateCreditCardPaymentRequest(object):
         self.contactless = contactless
         self.auto_recovery = auto_recovery
         self.operation_type = operation_type
+        self.recurrency_cycle = recurrency_cycle
 
 
     @classmethod
@@ -124,6 +129,7 @@ class CreateCreditCardPaymentRequest(object):
         contactless = pagarmecoreapi.models.create_card_payment_contactless_request.CreateCardPaymentContactlessRequest.from_dictionary(dictionary.get('contactless')) if dictionary.get('contactless') else None
         auto_recovery = dictionary.get('auto_recovery')
         operation_type = dictionary.get('operation_type')
+        recurrency_cycle = dictionary.get('recurrency_cycle')
 
         # Return an object of this model
         return cls(installments,
@@ -139,6 +145,7 @@ class CreateCreditCardPaymentRequest(object):
                    authentication,
                    contactless,
                    auto_recovery,
-                   operation_type)
+                   operation_type,
+                   recurrency_cycle)
 
 

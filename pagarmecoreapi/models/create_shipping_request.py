@@ -22,7 +22,7 @@ class CreateShippingRequest(object):
         recipient_phone (string): Recipient phone number
         address_id (string): The id of the address that will be used for
             shipping
-        address (CreateAddressRequest): Address data
+        address (CreateAddressRequest): Request for creating a new Address
         max_delivery_date (datetime): Data máxima de entrega
         estimated_delivery_date (datetime): Prazo estimado de entrega
         mtype (string): Shipping type

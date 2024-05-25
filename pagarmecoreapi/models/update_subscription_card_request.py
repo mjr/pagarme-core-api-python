@@ -15,7 +15,7 @@ class UpdateSubscriptionCardRequest(object):
     Request for updating the card from a subscription
 
     Attributes:
-        card (CreateCardRequest): Credit card data
+        card (CreateCardRequest): Card data
         card_id (string): Credit card id
 
     """

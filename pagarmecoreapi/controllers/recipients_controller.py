@@ -12,14 +12,15 @@ from pagarmecoreapi.controllers.base_controller import BaseController
 from pagarmecoreapi.http.auth.basic_auth import BasicAuth
 from pagarmecoreapi.models.get_transfer_response import GetTransferResponse
 from pagarmecoreapi.models.get_recipient_response import GetRecipientResponse
+from pagarmecoreapi.models.get_balance_response import GetBalanceResponse
+from pagarmecoreapi.models.list_anticipation_response import ListAnticipationResponse
+from pagarmecoreapi.models.get_withdraw_response import GetWithdrawResponse
 from pagarmecoreapi.models.get_anticipation_response import GetAnticipationResponse
 from pagarmecoreapi.models.get_anticipation_limit_response import GetAnticipationLimitResponse
 from pagarmecoreapi.models.list_recipient_response import ListRecipientResponse
-from pagarmecoreapi.models.get_withdraw_response import GetWithdrawResponse
 from pagarmecoreapi.models.list_transfer_response import ListTransferResponse
-from pagarmecoreapi.models.list_anticipation_response import ListAnticipationResponse
 from pagarmecoreapi.models.list_withdrawals import ListWithdrawals
-from pagarmecoreapi.models.get_balance_response import GetBalanceResponse
+from pagarmecoreapi.exceptions.error_exception import ErrorException
 
 class RecipientsController(BaseController):
 
@@ -60,31 +61,41 @@ class RecipientsController(BaseController):
 
         # Prepare headers
         _headers = {
-            'accept': 'application/json'
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name
         }
 
         # Prepare and execute request
         _request = self.http_client.get(_query_url, headers=_headers)
         BasicAuth.apply(_request)
         _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
         self.validate_response(_context)
 
         # Return appropriate type
         return APIHelper.json_deserialize(_context.response.raw_body, GetTransferResponse.from_dictionary)
 
-    def update_recipient(self,
-                         recipient_id,
-                         request,
-                         idempotency_key=None):
-        """Does a PUT request to /recipients/{recipient_id}.
+    def get_recipient(self,
+                      recipient_id):
+        """Does a GET request to /recipients/{recipient_id}.
 
-        Updates a recipient
+        Retrieves recipient information
 
         Args:
-            recipient_id (string): Recipient id
-            request (UpdateRecipientRequest): Recipient data
-            idempotency_key (string, optional): TODO: type description here.
-                Example: 
+            recipient_id (string): Recipiend id
 
         Returns:
             GetRecipientResponse: Response from the API. 
@@ -109,261 +120,27 @@ class RecipientsController(BaseController):
         # Prepare headers
         _headers = {
             'accept': 'application/json',
-            'content-type': 'application/json; charset=utf-8',
-            'idempotency-key': idempotency_key
-        }
-
-        # Prepare and execute request
-        _request = self.http_client.put(_query_url, headers=_headers, parameters=APIHelper.json_serialize(request))
-        BasicAuth.apply(_request)
-        _context = self.execute_request(_request)
-        self.validate_response(_context)
-
-        # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, GetRecipientResponse.from_dictionary)
-
-    def create_anticipation(self,
-                            recipient_id,
-                            request,
-                            idempotency_key=None):
-        """Does a POST request to /recipients/{recipient_id}/anticipations.
-
-        Creates an anticipation
-
-        Args:
-            recipient_id (string): Recipient id
-            request (CreateAnticipationRequest): Anticipation data
-            idempotency_key (string, optional): TODO: type description here.
-                Example: 
-
-        Returns:
-            GetAnticipationResponse: Response from the API. 
-
-        Raises:
-            APIException: When an error occurs while fetching the data from
-                the remote API. This exception includes the HTTP Response
-                code, an error message, and the HTTP body that was received in
-                the request.
-
-        """
-
-        # Prepare query URL
-        _url_path = '/recipients/{recipient_id}/anticipations'
-        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
-            'recipient_id': recipient_id
-        })
-        _query_builder = Configuration.base_uri
-        _query_builder += _url_path
-        _query_url = APIHelper.clean_url(_query_builder)
-
-        # Prepare headers
-        _headers = {
-            'accept': 'application/json',
-            'content-type': 'application/json; charset=utf-8',
-            'idempotency-key': idempotency_key
-        }
-
-        # Prepare and execute request
-        _request = self.http_client.post(_query_url, headers=_headers, parameters=APIHelper.json_serialize(request))
-        BasicAuth.apply(_request)
-        _context = self.execute_request(_request)
-        self.validate_response(_context)
-
-        # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, GetAnticipationResponse.from_dictionary)
-
-    def get_anticipation_limits(self,
-                                recipient_id,
-                                timeframe,
-                                payment_date):
-        """Does a GET request to /recipients/{recipient_id}/anticipation_limits.
-
-        Gets the anticipation limits for a recipient
-
-        Args:
-            recipient_id (string): Recipient id
-            timeframe (string): Timeframe
-            payment_date (datetime): Anticipation payment date
-
-        Returns:
-            GetAnticipationLimitResponse: Response from the API. 
-
-        Raises:
-            APIException: When an error occurs while fetching the data from
-                the remote API. This exception includes the HTTP Response
-                code, an error message, and the HTTP body that was received in
-                the request.
-
-        """
-
-        # Prepare query URL
-        _url_path = '/recipients/{recipient_id}/anticipation_limits'
-        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
-            'recipient_id': recipient_id
-        })
-        _query_builder = Configuration.base_uri
-        _query_builder += _url_path
-        _query_parameters = {
-            'timeframe': timeframe,
-            'payment_date': APIHelper.when_defined(APIHelper.RFC3339DateTime, payment_date)
-        }
-        _query_builder = APIHelper.append_url_with_query_parameters(_query_builder,
-            _query_parameters, Configuration.array_serialization)
-        _query_url = APIHelper.clean_url(_query_builder)
-
-        # Prepare headers
-        _headers = {
-            'accept': 'application/json'
+            'ServiceRefererName': Configuration.service_referer_name
         }
 
         # Prepare and execute request
         _request = self.http_client.get(_query_url, headers=_headers)
         BasicAuth.apply(_request)
         _context = self.execute_request(_request)
-        self.validate_response(_context)
 
-        # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, GetAnticipationLimitResponse.from_dictionary)
-
-    def get_recipients(self,
-                       page=None,
-                       size=None):
-        """Does a GET request to /recipients.
-
-        Retrieves paginated recipients information
-
-        Args:
-            page (int, optional): Page number
-            size (int, optional): Page size
-
-        Returns:
-            ListRecipientResponse: Response from the API. 
-
-        Raises:
-            APIException: When an error occurs while fetching the data from
-                the remote API. This exception includes the HTTP Response
-                code, an error message, and the HTTP body that was received in
-                the request.
-
-        """
-
-        # Prepare query URL
-        _url_path = '/recipients'
-        _query_builder = Configuration.base_uri
-        _query_builder += _url_path
-        _query_parameters = {
-            'page': page,
-            'size': size
-        }
-        _query_builder = APIHelper.append_url_with_query_parameters(_query_builder,
-            _query_parameters, Configuration.array_serialization)
-        _query_url = APIHelper.clean_url(_query_builder)
-
-        # Prepare headers
-        _headers = {
-            'accept': 'application/json'
-        }
-
-        # Prepare and execute request
-        _request = self.http_client.get(_query_url, headers=_headers)
-        BasicAuth.apply(_request)
-        _context = self.execute_request(_request)
-        self.validate_response(_context)
-
-        # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, ListRecipientResponse.from_dictionary)
-
-    def get_withdraw_by_id(self,
-                           recipient_id,
-                           withdrawal_id):
-        """Does a GET request to /recipients/{recipient_id}/withdrawals/{withdrawal_id}.
-
-        TODO: type endpoint description here.
-
-        Args:
-            recipient_id (string): TODO: type description here. Example: 
-            withdrawal_id (string): TODO: type description here. Example: 
-
-        Returns:
-            GetWithdrawResponse: Response from the API. 
-
-        Raises:
-            APIException: When an error occurs while fetching the data from
-                the remote API. This exception includes the HTTP Response
-                code, an error message, and the HTTP body that was received in
-                the request.
-
-        """
-
-        # Prepare query URL
-        _url_path = '/recipients/{recipient_id}/withdrawals/{withdrawal_id}'
-        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
-            'recipient_id': recipient_id,
-            'withdrawal_id': withdrawal_id
-        })
-        _query_builder = Configuration.base_uri
-        _query_builder += _url_path
-        _query_url = APIHelper.clean_url(_query_builder)
-
-        # Prepare headers
-        _headers = {
-            'accept': 'application/json'
-        }
-
-        # Prepare and execute request
-        _request = self.http_client.get(_query_url, headers=_headers)
-        BasicAuth.apply(_request)
-        _context = self.execute_request(_request)
-        self.validate_response(_context)
-
-        # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, GetWithdrawResponse.from_dictionary)
-
-    def update_recipient_default_bank_account(self,
-                                              recipient_id,
-                                              request,
-                                              idempotency_key=None):
-        """Does a PATCH request to /recipients/{recipient_id}/default-bank-account.
-
-        Updates the default bank account from a recipient
-
-        Args:
-            recipient_id (string): Recipient id
-            request (UpdateRecipientBankAccountRequest): Bank account data
-            idempotency_key (string, optional): TODO: type description here.
-                Example: 
-
-        Returns:
-            GetRecipientResponse: Response from the API. 
-
-        Raises:
-            APIException: When an error occurs while fetching the data from
-                the remote API. This exception includes the HTTP Response
-                code, an error message, and the HTTP body that was received in
-                the request.
-
-        """
-
-        # Prepare query URL
-        _url_path = '/recipients/{recipient_id}/default-bank-account'
-        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
-            'recipient_id': recipient_id
-        })
-        _query_builder = Configuration.base_uri
-        _query_builder += _url_path
-        _query_url = APIHelper.clean_url(_query_builder)
-
-        # Prepare headers
-        _headers = {
-            'accept': 'application/json',
-            'content-type': 'application/json; charset=utf-8',
-            'idempotency-key': idempotency_key
-        }
-
-        # Prepare and execute request
-        _request = self.http_client.patch(_query_url, headers=_headers, parameters=APIHelper.json_serialize(request))
-        BasicAuth.apply(_request)
-        _context = self.execute_request(_request)
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
         self.validate_response(_context)
 
         # Return appropriate type
@@ -371,7 +148,7 @@ class RecipientsController(BaseController):
 
     def update_recipient_metadata(self,
                                   recipient_id,
-                                  request,
+                                  body,
                                   idempotency_key=None):
         """Does a PATCH request to /recipients/{recipient_id}/metadata.
 
@@ -379,7 +156,7 @@ class RecipientsController(BaseController):
 
         Args:
             recipient_id (string): Recipient id
-            request (UpdateMetadataRequest): Metadata
+            body (UpdateMetadataRequest): Metadata
             idempotency_key (string, optional): TODO: type description here.
                 Example: 
 
@@ -406,42 +183,50 @@ class RecipientsController(BaseController):
         # Prepare headers
         _headers = {
             'accept': 'application/json',
-            'content-type': 'application/json; charset=utf-8',
+            'ServiceRefererName': Configuration.service_referer_name,
+            'Content-Type': 'application/json',
             'idempotency-key': idempotency_key
         }
 
         # Prepare and execute request
-        _request = self.http_client.patch(_query_url, headers=_headers, parameters=APIHelper.json_serialize(request))
+        _request = self.http_client.patch(_query_url, headers=_headers, parameters=APIHelper.json_serialize(body))
         BasicAuth.apply(_request)
         _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
         self.validate_response(_context)
 
         # Return appropriate type
         return APIHelper.json_deserialize(_context.response.raw_body, GetRecipientResponse.from_dictionary)
 
-    def get_transfers(self,
-                      recipient_id,
-                      page=None,
-                      size=None,
-                      status=None,
-                      created_since=None,
-                      created_until=None):
-        """Does a GET request to /recipients/{recipient_id}/transfers.
+    def create_transfer(self,
+                        recipient_id,
+                        body,
+                        idempotency_key=None):
+        """Does a POST request to /recipients/{recipient_id}/transfers.
 
-        Gets a paginated list of transfers for the recipient
+        Creates a transfer for a recipient
 
         Args:
-            recipient_id (string): Recipient id
-            page (int, optional): Page number
-            size (int, optional): Page size
-            status (string, optional): Filter for transfer status
-            created_since (datetime, optional): Filter for start range of
-                transfer creation date
-            created_until (datetime, optional): Filter for end range of
-                transfer creation date
+            recipient_id (string): Recipient Id
+            body (CreateTransferRequest): Transfer data
+            idempotency_key (string, optional): TODO: type description here.
+                Example: 
 
         Returns:
-            ListTransferResponse: Response from the API. 
+            GetTransferResponse: Response from the API. 
 
         Raises:
             APIException: When an error occurs while fetching the data from
@@ -458,81 +243,42 @@ class RecipientsController(BaseController):
         })
         _query_builder = Configuration.base_uri
         _query_builder += _url_path
-        _query_parameters = {
-            'page': page,
-            'size': size,
-            'status': status,
-            'created_since': APIHelper.when_defined(APIHelper.RFC3339DateTime, created_since),
-            'created_until': APIHelper.when_defined(APIHelper.RFC3339DateTime, created_until)
-        }
-        _query_builder = APIHelper.append_url_with_query_parameters(_query_builder,
-            _query_parameters, Configuration.array_serialization)
-        _query_url = APIHelper.clean_url(_query_builder)
-
-        # Prepare headers
-        _headers = {
-            'accept': 'application/json'
-        }
-
-        # Prepare and execute request
-        _request = self.http_client.get(_query_url, headers=_headers)
-        BasicAuth.apply(_request)
-        _context = self.execute_request(_request)
-        self.validate_response(_context)
-
-        # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, ListTransferResponse.from_dictionary)
-
-    def create_withdraw(self,
-                        recipient_id,
-                        request):
-        """Does a POST request to /recipients/{recipient_id}/withdrawals.
-
-        TODO: type endpoint description here.
-
-        Args:
-            recipient_id (string): TODO: type description here. Example: 
-            request (CreateWithdrawRequest): TODO: type description here.
-                Example: 
-
-        Returns:
-            GetWithdrawResponse: Response from the API. 
-
-        Raises:
-            APIException: When an error occurs while fetching the data from
-                the remote API. This exception includes the HTTP Response
-                code, an error message, and the HTTP body that was received in
-                the request.
-
-        """
-
-        # Prepare query URL
-        _url_path = '/recipients/{recipient_id}/withdrawals'
-        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
-            'recipient_id': recipient_id
-        })
-        _query_builder = Configuration.base_uri
-        _query_builder += _url_path
         _query_url = APIHelper.clean_url(_query_builder)
 
         # Prepare headers
         _headers = {
             'accept': 'application/json',
-            'content-type': 'application/json; charset=utf-8'
+            'ServiceRefererName': Configuration.service_referer_name,
+            'Content-Type': 'application/json',
+            'idempotency-key': idempotency_key
         }
 
         # Prepare and execute request
-        _request = self.http_client.post(_query_url, headers=_headers, parameters=APIHelper.json_serialize(request))
+        _request = self.http_client.post(_query_url, headers=_headers, parameters=APIHelper.json_serialize(body))
         BasicAuth.apply(_request)
         _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
         self.validate_response(_context)
 
         # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, GetWithdrawResponse.from_dictionary)
+        return APIHelper.json_deserialize(_context.response.raw_body, GetTransferResponse.from_dictionary)
 
     def update_automatic_anticipation_settings(self,
                                                recipient_id,
-                                               request,
+                                               body,
                                                idempotency_key=None):
         """Does a PATCH request to /recipients/{recipient_id}/automatic-anticipation-settings.
 
@@ -540,7 +286,7 @@ class RecipientsController(BaseController):
 
         Args:
             recipient_id (string): Recipient id
-            request (UpdateAutomaticAnticipationSettingsRequest): Metadata
+            body (UpdateAutomaticAnticipationSettingsRequest): Metadata
             idempotency_key (string, optional): TODO: type description here.
                 Example: 
 
@@ -567,32 +313,45 @@ class RecipientsController(BaseController):
         # Prepare headers
         _headers = {
             'accept': 'application/json',
-            'content-type': 'application/json; charset=utf-8',
+            'ServiceRefererName': Configuration.service_referer_name,
+            'Content-Type': 'application/json',
             'idempotency-key': idempotency_key
         }
 
         # Prepare and execute request
-        _request = self.http_client.patch(_query_url, headers=_headers, parameters=APIHelper.json_serialize(request))
+        _request = self.http_client.patch(_query_url, headers=_headers, parameters=APIHelper.json_serialize(body))
         BasicAuth.apply(_request)
         _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
         self.validate_response(_context)
 
         # Return appropriate type
         return APIHelper.json_deserialize(_context.response.raw_body, GetRecipientResponse.from_dictionary)
 
-    def get_anticipation(self,
-                         recipient_id,
-                         anticipation_id):
-        """Does a GET request to /recipients/{recipient_id}/anticipations/{anticipation_id}.
+    def get_balance(self,
+                    recipient_id):
+        """Does a GET request to /recipients/{recipient_id}/balance.
 
-        Gets an anticipation
+        Get balance information for a recipient
 
         Args:
             recipient_id (string): Recipient id
-            anticipation_id (string): Anticipation id
 
         Returns:
-            GetAnticipationResponse: Response from the API. 
+            GetBalanceResponse: Response from the API. 
 
         Raises:
             APIException: When an error occurs while fetching the data from
@@ -603,57 +362,7 @@ class RecipientsController(BaseController):
         """
 
         # Prepare query URL
-        _url_path = '/recipients/{recipient_id}/anticipations/{anticipation_id}'
-        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
-            'recipient_id': recipient_id,
-            'anticipation_id': anticipation_id
-        })
-        _query_builder = Configuration.base_uri
-        _query_builder += _url_path
-        _query_url = APIHelper.clean_url(_query_builder)
-
-        # Prepare headers
-        _headers = {
-            'accept': 'application/json'
-        }
-
-        # Prepare and execute request
-        _request = self.http_client.get(_query_url, headers=_headers)
-        BasicAuth.apply(_request)
-        _context = self.execute_request(_request)
-        self.validate_response(_context)
-
-        # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, GetAnticipationResponse.from_dictionary)
-
-    def update_recipient_transfer_settings(self,
-                                           recipient_id,
-                                           request,
-                                           idempotency_key=None):
-        """Does a PATCH request to /recipients/{recipient_id}/transfer-settings.
-
-        TODO: type endpoint description here.
-
-        Args:
-            recipient_id (string): Recipient Identificator
-            request (UpdateTransferSettingsRequest): TODO: type description
-                here. Example: 
-            idempotency_key (string, optional): TODO: type description here.
-                Example: 
-
-        Returns:
-            GetRecipientResponse: Response from the API. 
-
-        Raises:
-            APIException: When an error occurs while fetching the data from
-                the remote API. This exception includes the HTTP Response
-                code, an error message, and the HTTP body that was received in
-                the request.
-
-        """
-
-        # Prepare query URL
-        _url_path = '/recipients/{recipient_id}/transfer-settings'
+        _url_path = '/recipients/{recipient_id}/balance'
         _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
             'recipient_id': recipient_id
         })
@@ -664,18 +373,31 @@ class RecipientsController(BaseController):
         # Prepare headers
         _headers = {
             'accept': 'application/json',
-            'content-type': 'application/json; charset=utf-8',
-            'idempotency-key': idempotency_key
+            'ServiceRefererName': Configuration.service_referer_name
         }
 
         # Prepare and execute request
-        _request = self.http_client.patch(_query_url, headers=_headers, parameters=APIHelper.json_serialize(request))
+        _request = self.http_client.get(_query_url, headers=_headers)
         BasicAuth.apply(_request)
         _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
         self.validate_response(_context)
 
         # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, GetRecipientResponse.from_dictionary)
+        return APIHelper.json_deserialize(_context.response.raw_body, GetBalanceResponse.from_dictionary)
 
     def get_anticipations(self,
                           recipient_id,
@@ -740,26 +462,169 @@ class RecipientsController(BaseController):
 
         # Prepare headers
         _headers = {
-            'accept': 'application/json'
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name
         }
 
         # Prepare and execute request
         _request = self.http_client.get(_query_url, headers=_headers)
         BasicAuth.apply(_request)
         _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
         self.validate_response(_context)
 
         # Return appropriate type
         return APIHelper.json_deserialize(_context.response.raw_body, ListAnticipationResponse.from_dictionary)
 
-    def get_recipient(self,
-                      recipient_id):
-        """Does a GET request to /recipients/{recipient_id}.
+    def get_withdraw_by_id(self,
+                           recipient_id,
+                           withdrawal_id):
+        """Does a GET request to /recipients/{recipient_id}/withdrawals/{withdrawal_id}.
 
-        Retrieves recipient information
+        GetWithdrawById
 
         Args:
-            recipient_id (string): Recipiend id
+            recipient_id (string): TODO: type description here. Example: 
+            withdrawal_id (string): TODO: type description here. Example: 
+
+        Returns:
+            GetWithdrawResponse: Response from the API. 
+
+        Raises:
+            APIException: When an error occurs while fetching the data from
+                the remote API. This exception includes the HTTP Response
+                code, an error message, and the HTTP body that was received in
+                the request.
+
+        """
+
+        # Prepare query URL
+        _url_path = '/recipients/{recipient_id}/withdrawals/{withdrawal_id}'
+        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
+            'recipient_id': recipient_id,
+            'withdrawal_id': withdrawal_id
+        })
+        _query_builder = Configuration.base_uri
+        _query_builder += _url_path
+        _query_url = APIHelper.clean_url(_query_builder)
+
+        # Prepare headers
+        _headers = {
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name
+        }
+
+        # Prepare and execute request
+        _request = self.http_client.get(_query_url, headers=_headers)
+        BasicAuth.apply(_request)
+        _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
+        self.validate_response(_context)
+
+        # Return appropriate type
+        return APIHelper.json_deserialize(_context.response.raw_body, GetWithdrawResponse.from_dictionary)
+
+    def create_withdraw(self,
+                        recipient_id,
+                        body):
+        """Does a POST request to /recipients/{recipient_id}/withdrawals.
+
+        CreateWithdraw
+
+        Args:
+            recipient_id (string): TODO: type description here. Example: 
+            body (CreateWithdrawRequest): TODO: type description here.
+                Example: 
+
+        Returns:
+            GetWithdrawResponse: Response from the API. 
+
+        Raises:
+            APIException: When an error occurs while fetching the data from
+                the remote API. This exception includes the HTTP Response
+                code, an error message, and the HTTP body that was received in
+                the request.
+
+        """
+
+        # Prepare query URL
+        _url_path = '/recipients/{recipient_id}/withdrawals'
+        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
+            'recipient_id': recipient_id
+        })
+        _query_builder = Configuration.base_uri
+        _query_builder += _url_path
+        _query_url = APIHelper.clean_url(_query_builder)
+
+        # Prepare headers
+        _headers = {
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name,
+            'Content-Type': 'application/json'
+        }
+
+        # Prepare and execute request
+        _request = self.http_client.post(_query_url, headers=_headers, parameters=APIHelper.json_serialize(body))
+        BasicAuth.apply(_request)
+        _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
+        self.validate_response(_context)
+
+        # Return appropriate type
+        return APIHelper.json_deserialize(_context.response.raw_body, GetWithdrawResponse.from_dictionary)
+
+    def update_recipient(self,
+                         recipient_id,
+                         body,
+                         idempotency_key=None):
+        """Does a PUT request to /recipients/{recipient_id}.
+
+        Updates a recipient
+
+        Args:
+            recipient_id (string): Recipient id
+            body (UpdateRecipientRequest): Recipient data
+            idempotency_key (string, optional): TODO: type description here.
+                Example: 
 
         Returns:
             GetRecipientResponse: Response from the API. 
@@ -783,17 +648,492 @@ class RecipientsController(BaseController):
 
         # Prepare headers
         _headers = {
-            'accept': 'application/json'
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name,
+            'Content-Type': 'application/json',
+            'idempotency-key': idempotency_key
+        }
+
+        # Prepare and execute request
+        _request = self.http_client.put(_query_url, headers=_headers, parameters=APIHelper.json_serialize(body))
+        BasicAuth.apply(_request)
+        _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
+        self.validate_response(_context)
+
+        # Return appropriate type
+        return APIHelper.json_deserialize(_context.response.raw_body, GetRecipientResponse.from_dictionary)
+
+    def create_anticipation(self,
+                            recipient_id,
+                            body,
+                            idempotency_key=None):
+        """Does a POST request to /recipients/{recipient_id}/anticipations.
+
+        Creates an anticipation
+
+        Args:
+            recipient_id (string): Recipient id
+            body (CreateAnticipationRequest): Anticipation data
+            idempotency_key (string, optional): TODO: type description here.
+                Example: 
+
+        Returns:
+            GetAnticipationResponse: Response from the API. 
+
+        Raises:
+            APIException: When an error occurs while fetching the data from
+                the remote API. This exception includes the HTTP Response
+                code, an error message, and the HTTP body that was received in
+                the request.
+
+        """
+
+        # Prepare query URL
+        _url_path = '/recipients/{recipient_id}/anticipations'
+        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
+            'recipient_id': recipient_id
+        })
+        _query_builder = Configuration.base_uri
+        _query_builder += _url_path
+        _query_url = APIHelper.clean_url(_query_builder)
+
+        # Prepare headers
+        _headers = {
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name,
+            'Content-Type': 'application/json',
+            'idempotency-key': idempotency_key
+        }
+
+        # Prepare and execute request
+        _request = self.http_client.post(_query_url, headers=_headers, parameters=APIHelper.json_serialize(body))
+        BasicAuth.apply(_request)
+        _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
+        self.validate_response(_context)
+
+        # Return appropriate type
+        return APIHelper.json_deserialize(_context.response.raw_body, GetAnticipationResponse.from_dictionary)
+
+    def update_recipient_default_bank_account(self,
+                                              recipient_id,
+                                              body,
+                                              idempotency_key=None):
+        """Does a PATCH request to /recipients/{recipient_id}/default-bank-account.
+
+        Updates the default bank account from a recipient
+
+        Args:
+            recipient_id (string): Recipient id
+            body (UpdateRecipientBankAccountRequest): Bank account data
+            idempotency_key (string, optional): TODO: type description here.
+                Example: 
+
+        Returns:
+            GetRecipientResponse: Response from the API. 
+
+        Raises:
+            APIException: When an error occurs while fetching the data from
+                the remote API. This exception includes the HTTP Response
+                code, an error message, and the HTTP body that was received in
+                the request.
+
+        """
+
+        # Prepare query URL
+        _url_path = '/recipients/{recipient_id}/default-bank-account'
+        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
+            'recipient_id': recipient_id
+        })
+        _query_builder = Configuration.base_uri
+        _query_builder += _url_path
+        _query_url = APIHelper.clean_url(_query_builder)
+
+        # Prepare headers
+        _headers = {
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name,
+            'Content-Type': 'application/json',
+            'idempotency-key': idempotency_key
+        }
+
+        # Prepare and execute request
+        _request = self.http_client.patch(_query_url, headers=_headers, parameters=APIHelper.json_serialize(body))
+        BasicAuth.apply(_request)
+        _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
+        self.validate_response(_context)
+
+        # Return appropriate type
+        return APIHelper.json_deserialize(_context.response.raw_body, GetRecipientResponse.from_dictionary)
+
+    def get_recipient_by_code(self,
+                              code):
+        """Does a GET request to /recipients/{code}.
+
+        Retrieves recipient information
+
+        Args:
+            code (string): Recipient code
+
+        Returns:
+            GetRecipientResponse: Response from the API. 
+
+        Raises:
+            APIException: When an error occurs while fetching the data from
+                the remote API. This exception includes the HTTP Response
+                code, an error message, and the HTTP body that was received in
+                the request.
+
+        """
+
+        # Prepare query URL
+        _url_path = '/recipients/{code}'
+        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
+            'code': code
+        })
+        _query_builder = Configuration.base_uri
+        _query_builder += _url_path
+        _query_url = APIHelper.clean_url(_query_builder)
+
+        # Prepare headers
+        _headers = {
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name
         }
 
         # Prepare and execute request
         _request = self.http_client.get(_query_url, headers=_headers)
         BasicAuth.apply(_request)
         _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
         self.validate_response(_context)
 
         # Return appropriate type
         return APIHelper.json_deserialize(_context.response.raw_body, GetRecipientResponse.from_dictionary)
+
+    def get_anticipation_limits(self,
+                                recipient_id,
+                                timeframe,
+                                payment_date):
+        """Does a GET request to /recipients/{recipient_id}/anticipation_limits.
+
+        Gets the anticipation limits for a recipient
+
+        Args:
+            recipient_id (string): Recipient id
+            timeframe (string): Timeframe
+            payment_date (datetime): Anticipation payment date
+
+        Returns:
+            GetAnticipationLimitResponse: Response from the API. 
+
+        Raises:
+            APIException: When an error occurs while fetching the data from
+                the remote API. This exception includes the HTTP Response
+                code, an error message, and the HTTP body that was received in
+                the request.
+
+        """
+
+        # Prepare query URL
+        _url_path = '/recipients/{recipient_id}/anticipation_limits'
+        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
+            'recipient_id': recipient_id
+        })
+        _query_builder = Configuration.base_uri
+        _query_builder += _url_path
+        _query_parameters = {
+            'timeframe': timeframe,
+            'payment_date': APIHelper.when_defined(APIHelper.RFC3339DateTime, payment_date)
+        }
+        _query_builder = APIHelper.append_url_with_query_parameters(_query_builder,
+            _query_parameters, Configuration.array_serialization)
+        _query_url = APIHelper.clean_url(_query_builder)
+
+        # Prepare headers
+        _headers = {
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name
+        }
+
+        # Prepare and execute request
+        _request = self.http_client.get(_query_url, headers=_headers)
+        BasicAuth.apply(_request)
+        _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
+        self.validate_response(_context)
+
+        # Return appropriate type
+        return APIHelper.json_deserialize(_context.response.raw_body, GetAnticipationLimitResponse.from_dictionary)
+
+    def get_recipients(self,
+                       page=None,
+                       size=None):
+        """Does a GET request to /recipients.
+
+        Retrieves paginated recipients information
+
+        Args:
+            page (int, optional): Page number
+            size (int, optional): Page size
+
+        Returns:
+            ListRecipientResponse: Response from the API. 
+
+        Raises:
+            APIException: When an error occurs while fetching the data from
+                the remote API. This exception includes the HTTP Response
+                code, an error message, and the HTTP body that was received in
+                the request.
+
+        """
+
+        # Prepare query URL
+        _url_path = '/recipients'
+        _query_builder = Configuration.base_uri
+        _query_builder += _url_path
+        _query_parameters = {
+            'page': page,
+            'size': size
+        }
+        _query_builder = APIHelper.append_url_with_query_parameters(_query_builder,
+            _query_parameters, Configuration.array_serialization)
+        _query_url = APIHelper.clean_url(_query_builder)
+
+        # Prepare headers
+        _headers = {
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name
+        }
+
+        # Prepare and execute request
+        _request = self.http_client.get(_query_url, headers=_headers)
+        BasicAuth.apply(_request)
+        _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
+        self.validate_response(_context)
+
+        # Return appropriate type
+        return APIHelper.json_deserialize(_context.response.raw_body, ListRecipientResponse.from_dictionary)
+
+    def create_recipient(self,
+                         body,
+                         idempotency_key=None):
+        """Does a POST request to /recipients.
+
+        Creates a new recipient
+
+        Args:
+            body (CreateRecipientRequest): Recipient data
+            idempotency_key (string, optional): TODO: type description here.
+                Example: 
+
+        Returns:
+            GetRecipientResponse: Response from the API. 
+
+        Raises:
+            APIException: When an error occurs while fetching the data from
+                the remote API. This exception includes the HTTP Response
+                code, an error message, and the HTTP body that was received in
+                the request.
+
+        """
+
+        # Prepare query URL
+        _url_path = '/recipients'
+        _query_builder = Configuration.base_uri
+        _query_builder += _url_path
+        _query_url = APIHelper.clean_url(_query_builder)
+
+        # Prepare headers
+        _headers = {
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name,
+            'Content-Type': 'application/json',
+            'idempotency-key': idempotency_key
+        }
+
+        # Prepare and execute request
+        _request = self.http_client.post(_query_url, headers=_headers, parameters=APIHelper.json_serialize(body))
+        BasicAuth.apply(_request)
+        _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
+        self.validate_response(_context)
+
+        # Return appropriate type
+        return APIHelper.json_deserialize(_context.response.raw_body, GetRecipientResponse.from_dictionary)
+
+    def get_transfers(self,
+                      recipient_id,
+                      page=None,
+                      size=None,
+                      status=None,
+                      created_since=None,
+                      created_until=None):
+        """Does a GET request to /recipients/{recipient_id}/transfers.
+
+        Gets a paginated list of transfers for the recipient
+
+        Args:
+            recipient_id (string): Recipient id
+            page (int, optional): Page number
+            size (int, optional): Page size
+            status (string, optional): Filter for transfer status
+            created_since (datetime, optional): Filter for start range of
+                transfer creation date
+            created_until (datetime, optional): Filter for end range of
+                transfer creation date
+
+        Returns:
+            ListTransferResponse: Response from the API. 
+
+        Raises:
+            APIException: When an error occurs while fetching the data from
+                the remote API. This exception includes the HTTP Response
+                code, an error message, and the HTTP body that was received in
+                the request.
+
+        """
+
+        # Prepare query URL
+        _url_path = '/recipients/{recipient_id}/transfers'
+        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
+            'recipient_id': recipient_id
+        })
+        _query_builder = Configuration.base_uri
+        _query_builder += _url_path
+        _query_parameters = {
+            'page': page,
+            'size': size,
+            'status': status,
+            'created_since': APIHelper.when_defined(APIHelper.RFC3339DateTime, created_since),
+            'created_until': APIHelper.when_defined(APIHelper.RFC3339DateTime, created_until)
+        }
+        _query_builder = APIHelper.append_url_with_query_parameters(_query_builder,
+            _query_parameters, Configuration.array_serialization)
+        _query_url = APIHelper.clean_url(_query_builder)
+
+        # Prepare headers
+        _headers = {
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name
+        }
+
+        # Prepare and execute request
+        _request = self.http_client.get(_query_url, headers=_headers)
+        BasicAuth.apply(_request)
+        _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
+        self.validate_response(_context)
+
+        # Return appropriate type
+        return APIHelper.json_deserialize(_context.response.raw_body, ListTransferResponse.from_dictionary)
 
     def get_withdrawals(self,
                         recipient_id,
@@ -847,29 +1187,46 @@ class RecipientsController(BaseController):
 
         # Prepare headers
         _headers = {
-            'accept': 'application/json'
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name
         }
 
         # Prepare and execute request
         _request = self.http_client.get(_query_url, headers=_headers)
         BasicAuth.apply(_request)
         _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
         self.validate_response(_context)
 
         # Return appropriate type
         return APIHelper.json_deserialize(_context.response.raw_body, ListWithdrawals.from_dictionary)
 
-    def get_balance(self,
-                    recipient_id):
-        """Does a GET request to /recipients/{recipient_id}/balance.
+    def get_anticipation(self,
+                         recipient_id,
+                         anticipation_id):
+        """Does a GET request to /recipients/{recipient_id}/anticipations/{anticipation_id}.
 
-        Get balance information for a recipient
+        Gets an anticipation
 
         Args:
             recipient_id (string): Recipient id
+            anticipation_id (string): Anticipation id
 
         Returns:
-            GetBalanceResponse: Response from the API. 
+            GetAnticipationResponse: Response from the API. 
 
         Raises:
             APIException: When an error occurs while fetching the data from
@@ -880,57 +1237,10 @@ class RecipientsController(BaseController):
         """
 
         # Prepare query URL
-        _url_path = '/recipients/{recipient_id}/balance'
+        _url_path = '/recipients/{recipient_id}/anticipations/{anticipation_id}'
         _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
-            'recipient_id': recipient_id
-        })
-        _query_builder = Configuration.base_uri
-        _query_builder += _url_path
-        _query_url = APIHelper.clean_url(_query_builder)
-
-        # Prepare headers
-        _headers = {
-            'accept': 'application/json'
-        }
-
-        # Prepare and execute request
-        _request = self.http_client.get(_query_url, headers=_headers)
-        BasicAuth.apply(_request)
-        _context = self.execute_request(_request)
-        self.validate_response(_context)
-
-        # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, GetBalanceResponse.from_dictionary)
-
-    def create_transfer(self,
-                        recipient_id,
-                        request,
-                        idempotency_key=None):
-        """Does a POST request to /recipients/{recipient_id}/transfers.
-
-        Creates a transfer for a recipient
-
-        Args:
-            recipient_id (string): Recipient Id
-            request (CreateTransferRequest): Transfer data
-            idempotency_key (string, optional): TODO: type description here.
-                Example: 
-
-        Returns:
-            GetTransferResponse: Response from the API. 
-
-        Raises:
-            APIException: When an error occurs while fetching the data from
-                the remote API. This exception includes the HTTP Response
-                code, an error message, and the HTTP body that was received in
-                the request.
-
-        """
-
-        # Prepare query URL
-        _url_path = '/recipients/{recipient_id}/transfers'
-        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
-            'recipient_id': recipient_id
+            'recipient_id': recipient_id,
+            'anticipation_id': anticipation_id
         })
         _query_builder = Configuration.base_uri
         _query_builder += _url_path
@@ -939,28 +1249,44 @@ class RecipientsController(BaseController):
         # Prepare headers
         _headers = {
             'accept': 'application/json',
-            'content-type': 'application/json; charset=utf-8',
-            'idempotency-key': idempotency_key
+            'ServiceRefererName': Configuration.service_referer_name
         }
 
         # Prepare and execute request
-        _request = self.http_client.post(_query_url, headers=_headers, parameters=APIHelper.json_serialize(request))
+        _request = self.http_client.get(_query_url, headers=_headers)
         BasicAuth.apply(_request)
         _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
         self.validate_response(_context)
 
         # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, GetTransferResponse.from_dictionary)
+        return APIHelper.json_deserialize(_context.response.raw_body, GetAnticipationResponse.from_dictionary)
 
-    def create_recipient(self,
-                         request,
-                         idempotency_key=None):
-        """Does a POST request to /recipients.
+    def update_recipient_transfer_settings(self,
+                                           recipient_id,
+                                           body,
+                                           idempotency_key=None):
+        """Does a PATCH request to /recipients/{recipient_id}/transfer-settings.
 
-        Creates a new recipient
+        UpdateRecipientTransferSettings
 
         Args:
-            request (CreateRecipientRequest): Recipient data
+            recipient_id (string): Recipient Identificator
+            body (UpdateTransferSettingsRequest): TODO: type description here.
+                Example: 
             idempotency_key (string, optional): TODO: type description here.
                 Example: 
 
@@ -976,51 +1302,9 @@ class RecipientsController(BaseController):
         """
 
         # Prepare query URL
-        _url_path = '/recipients'
-        _query_builder = Configuration.base_uri
-        _query_builder += _url_path
-        _query_url = APIHelper.clean_url(_query_builder)
-
-        # Prepare headers
-        _headers = {
-            'accept': 'application/json',
-            'content-type': 'application/json; charset=utf-8',
-            'idempotency-key': idempotency_key
-        }
-
-        # Prepare and execute request
-        _request = self.http_client.post(_query_url, headers=_headers, parameters=APIHelper.json_serialize(request))
-        BasicAuth.apply(_request)
-        _context = self.execute_request(_request)
-        self.validate_response(_context)
-
-        # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, GetRecipientResponse.from_dictionary)
-
-    def get_recipient_by_code(self,
-                              code):
-        """Does a GET request to /recipients/{code}.
-
-        Retrieves recipient information
-
-        Args:
-            code (string): Recipient code
-
-        Returns:
-            GetRecipientResponse: Response from the API. 
-
-        Raises:
-            APIException: When an error occurs while fetching the data from
-                the remote API. This exception includes the HTTP Response
-                code, an error message, and the HTTP body that was received in
-                the request.
-
-        """
-
-        # Prepare query URL
-        _url_path = '/recipients/{code}'
+        _url_path = '/recipients/{recipient_id}/transfer-settings'
         _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
-            'code': code
+            'recipient_id': recipient_id
         })
         _query_builder = Configuration.base_uri
         _query_builder += _url_path
@@ -1028,13 +1312,30 @@ class RecipientsController(BaseController):
 
         # Prepare headers
         _headers = {
-            'accept': 'application/json'
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name,
+            'Content-Type': 'application/json',
+            'idempotency-key': idempotency_key
         }
 
         # Prepare and execute request
-        _request = self.http_client.get(_query_url, headers=_headers)
+        _request = self.http_client.patch(_query_url, headers=_headers, parameters=APIHelper.json_serialize(body))
         BasicAuth.apply(_request)
         _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
         self.validate_response(_context)
 
         # Return appropriate type
@@ -1043,7 +1344,7 @@ class RecipientsController(BaseController):
     def get_default_recipient(self):
         """Does a GET request to /recipients/default.
 
-        TODO: type endpoint description here.
+        GetDefaultRecipient
 
         Returns:
             GetRecipientResponse: Response from the API. 
@@ -1064,13 +1365,28 @@ class RecipientsController(BaseController):
 
         # Prepare headers
         _headers = {
-            'accept': 'application/json'
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name
         }
 
         # Prepare and execute request
         _request = self.http_client.get(_query_url, headers=_headers)
         BasicAuth.apply(_request)
         _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
         self.validate_response(_context)
 
         # Return appropriate type

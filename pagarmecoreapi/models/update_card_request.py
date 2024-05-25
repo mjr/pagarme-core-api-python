@@ -20,7 +20,8 @@ class UpdateCardRequest(object):
         exp_year (int): Expiration year
         billing_address_id (string): Id of the address to be used as billing
             address
-        billing_address (CreateAddressRequest): Billing address
+        billing_address (CreateAddressRequest): Request for creating a new
+            Address
         metadata (dict<object, string>): Metadata
         label (string): TODO: type description here.
 

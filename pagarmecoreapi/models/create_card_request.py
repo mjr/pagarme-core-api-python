@@ -22,7 +22,8 @@ class CreateCardRequest(object):
         exp_year (int): The expiration year, that can be informed with 2 or 4
             digits
         cvv (string): The card's security code
-        billing_address (CreateAddressRequest): Card's billing address
+        billing_address (CreateAddressRequest): Request for creating a new
+            Address
         brand (string): Card brand
         billing_address_id (string): The address id for the billing address
         metadata (dict<object, string>): Metadata
@@ -66,7 +67,7 @@ class CreateCardRequest(object):
                  brand=None,
                  billing_address_id=None,
                  metadata=None,
-                 mtype='credit',
+                 mtype=None,
                  options=None,
                  private_label=None,
                  label=None,
@@ -121,7 +122,7 @@ class CreateCardRequest(object):
         brand = dictionary.get('brand')
         billing_address_id = dictionary.get('billing_address_id')
         metadata = dictionary.get('metadata')
-        mtype = dictionary.get("type") if dictionary.get("type") else 'credit'
+        mtype = dictionary.get('type')
         options = pagarmecoreapi.models.create_card_options_request.CreateCardOptionsRequest.from_dictionary(dictionary.get('options')) if dictionary.get('options') else None
         private_label = dictionary.get('private_label')
         label = dictionary.get('label')

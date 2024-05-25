@@ -40,24 +40,28 @@ class GetCheckoutPaymentResponse(object):
         updated_at (datetime): Data de atualização
         canceled_at (datetime): Data de cancelamento
         customer_editable (bool): Torna o objeto customer editável
-        customer (GetCustomerResponse): Dados do comprador
-        billingaddress (GetAddressResponse): Dados do endereço de cobrança
-        credit_card (GetCheckoutCreditCardPaymentResponse): Configurações de
-            cartão de crédito
-        boleto (GetCheckoutBoletoPaymentResponse): Configurações de boleto
+        customer (GetCustomerResponse): Response object for getting a
+            customer
+        billingaddress (GetAddressResponse): Response object for getting an
+            Address
+        credit_card (GetCheckoutCreditCardPaymentResponse): TODO: type
+            description here.
+        boleto (GetCheckoutBoletoPaymentResponse): TODO: type description
+            here.
         billing_address_editable (bool): Indica se o billing address poderá
             ser editado
-        shipping (GetShippingResponse): Configurações  de entrega
+        shipping (GetShippingResponse): Response object for getting the
+            shipping data
         shippable (bool): Indica se possui entrega
         closed_at (datetime): Data de fechamento
         expires_at (datetime): Data de expiração
         currency (string): Moeda
-        debit_card (GetCheckoutDebitCardPaymentResponse): Configurações de
-            cartão de débito
+        debit_card (GetCheckoutDebitCardPaymentResponse): TODO: type
+            description here.
         bank_transfer (GetCheckoutBankTransferPaymentResponse): Bank transfer
-            payment response
+            checkout response
         accepted_brands (list of string): Accepted Brands
-        pix (GetCheckoutPixPaymentResponse): Pix payment response
+        pix (GetCheckoutPixPaymentResponse): Checkout pix payment response
 
     """
 

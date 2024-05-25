@@ -23,7 +23,7 @@ class CreateOrderRequest(object):
 
     Attributes:
         items (list of CreateOrderItemRequest): Items
-        customer (CreateCustomerRequest): Customer
+        customer (CreateCustomerRequest): Request for creating a new customer
         payments (list of CreatePaymentRequest): Payment data
         code (string): The order code
         customer_id (string): The customer id
@@ -33,8 +33,8 @@ class CreateOrderRequest(object):
             anti-fraud
         ip (string): Ip address
         session_id (string): Session id
-        location (CreateLocationRequest): Request's location
-        device (CreateDeviceRequest): Device's informations
+        location (CreateLocationRequest): Request for creating a location
+        device (CreateDeviceRequest): Request for creating a device
         closed (bool): TODO: type description here.
         currency (string): Currency
         antifraud (CreateAntifraudRequest): TODO: type description here.
@@ -69,7 +69,7 @@ class CreateOrderRequest(object):
                  code=None,
                  customer_id=None,
                  metadata=None,
-                 closed=True,
+                 closed=None,
                  shipping=None,
                  antifraud_enabled=None,
                  ip=None,
@@ -132,7 +132,7 @@ class CreateOrderRequest(object):
         code = dictionary.get('code')
         customer_id = dictionary.get('customer_id')
         metadata = dictionary.get('metadata')
-        closed = dictionary.get("closed") if dictionary.get("closed") else True
+        closed = dictionary.get('closed')
         shipping = pagarmecoreapi.models.create_shipping_request.CreateShippingRequest.from_dictionary(dictionary.get('shipping')) if dictionary.get('shipping') else None
         antifraud_enabled = dictionary.get('antifraud_enabled')
         ip = dictionary.get('ip')

@@ -29,20 +29,23 @@ class GetSubscriptionResponse(object):
         interval (string): TODO: type description here.
         interval_count (int): TODO: type description here.
         billing_type (string): TODO: type description here.
-        current_cycle (GetPeriodResponse): TODO: type description here.
+        current_cycle (GetPeriodResponse): Response object for getting a
+            period
         payment_method (string): TODO: type description here.
         currency (string): TODO: type description here.
         installments (int): TODO: type description here.
         status (string): TODO: type description here.
         created_at (datetime): TODO: type description here.
         updated_at (datetime): TODO: type description here.
-        customer (GetCustomerResponse): TODO: type description here.
-        card (GetCardResponse): TODO: type description here.
+        customer (GetCustomerResponse): Response object for getting a
+            customer
+        card (GetCardResponse): Response object for getting a credit card
         items (list of GetSubscriptionItemResponse): TODO: type description
             here.
         statement_descriptor (string): TODO: type description here.
         metadata (dict<object, string>): TODO: type description here.
-        setup (GetSetupResponse): TODO: type description here.
+        setup (GetSetupResponse): Response object for getting the setup from a
+            subscription
         gateway_affiliation_id (string): Affiliation Code
         next_billing_at (datetime): TODO: type description here.
         billing_day (int): TODO: type description here.
@@ -51,7 +54,7 @@ class GetSubscriptionResponse(object):
         discounts (list of GetDiscountResponse): Subscription discounts
         increments (list of GetIncrementResponse): Subscription increments
         boleto_due_days (int): Days until boleto expires
-        split (GetSubscriptionSplitResponse): Subscription's split responde
+        split (GetSubscriptionSplitResponse): TODO: type description here.
 
     """
 

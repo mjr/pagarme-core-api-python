@@ -16,7 +16,7 @@ class CreateTokenRequest(object):
 
     Attributes:
         mtype (string): Token type
-        card (CreateCardTokenRequest): Card data
+        card (CreateCardTokenRequest): Card token data
 
     """
 
@@ -27,7 +27,7 @@ class CreateTokenRequest(object):
     }
 
     def __init__(self,
-                 mtype='card',
+                 mtype=None,
                  card=None):
         """Constructor for the CreateTokenRequest class"""
 
@@ -54,7 +54,7 @@ class CreateTokenRequest(object):
             return None
 
         # Extract variables from the dictionary
-        mtype = dictionary.get("type") if dictionary.get("type") else 'card'
+        mtype = dictionary.get('type')
         card = pagarmecoreapi.models.create_card_token_request.CreateCardTokenRequest.from_dictionary(dictionary.get('card')) if dictionary.get('card') else None
 
         # Return an object of this model

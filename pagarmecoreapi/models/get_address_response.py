@@ -28,7 +28,8 @@ class GetAddressResponse(object):
         status (string): TODO: type description here.
         created_at (datetime): TODO: type description here.
         updated_at (datetime): TODO: type description here.
-        customer (GetCustomerResponse): TODO: type description here.
+        customer (GetCustomerResponse): Response object for getting a
+            customer
         metadata (dict<object, string>): TODO: type description here.
         line_1 (string): Line 1 for address
         line_2 (string): Line 2 for address

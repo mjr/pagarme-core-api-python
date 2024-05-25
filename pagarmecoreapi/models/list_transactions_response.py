@@ -17,7 +17,8 @@ class ListTransactionsResponse(object):
 
     Attributes:
         data (list of GetTransactionResponse): The transaction objects
-        paging (PagingResponse): Paging object
+        paging (PagingResponse): Object used for returning lists of objects
+            with pagination
 
     """
 

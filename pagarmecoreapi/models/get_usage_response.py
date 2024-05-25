@@ -23,7 +23,8 @@ class GetUsageResponse(object):
         created_at (datetime): Creation date
         status (string): Status
         deleted_at (datetime): TODO: type description here.
-        subscription_item (GetSubscriptionItemResponse): Subscription item
+        subscription_item (GetSubscriptionItemResponse): TODO: type
+            description here.
         code (string): Identification code in the client system
         group (string): Identification group in the client system
         amount (int): Field used in item scheme type 'Percent'

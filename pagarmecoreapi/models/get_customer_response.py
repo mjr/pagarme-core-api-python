@@ -26,7 +26,7 @@ class GetCustomerResponse(object):
         document (string): TODO: type description here.
         mtype (string): TODO: type description here.
         fb_access_token (string): TODO: type description here.
-        address (GetAddressResponse): TODO: type description here.
+        address (GetAddressResponse): Response object for getting an Address
         metadata (dict<object, string>): TODO: type description here.
         phones (GetPhonesResponse): TODO: type description here.
         fb_id (long|int): TODO: type description here.

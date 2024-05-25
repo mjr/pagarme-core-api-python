@@ -20,7 +20,7 @@ class UpdateCustomerRequest(object):
         email (string): Email
         document (string): Document number
         mtype (string): Person type
-        address (CreateAddressRequest): Address
+        address (CreateAddressRequest): Request for creating a new Address
         metadata (dict<object, string>): Metadata
         phones (CreatePhonesRequest): TODO: type description here.
         code (string): Código de referência do cliente no sistema da loja.

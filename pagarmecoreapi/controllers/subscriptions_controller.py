@@ -12,17 +12,18 @@ from pagarmecoreapi.controllers.base_controller import BaseController
 from pagarmecoreapi.http.auth.basic_auth import BasicAuth
 from pagarmecoreapi.models.get_subscription_response import GetSubscriptionResponse
 from pagarmecoreapi.models.get_usage_response import GetUsageResponse
+from pagarmecoreapi.models.get_subscription_item_response import GetSubscriptionItemResponse
+from pagarmecoreapi.models.list_increments_response import ListIncrementsResponse
+from pagarmecoreapi.models.get_period_response import GetPeriodResponse
 from pagarmecoreapi.models.get_discount_response import GetDiscountResponse
 from pagarmecoreapi.models.list_subscription_items_response import ListSubscriptionItemsResponse
-from pagarmecoreapi.models.get_subscription_item_response import GetSubscriptionItemResponse
-from pagarmecoreapi.models.list_subscriptions_response import ListSubscriptionsResponse
-from pagarmecoreapi.models.get_increment_response import GetIncrementResponse
-from pagarmecoreapi.models.list_cycles_response import ListCyclesResponse
-from pagarmecoreapi.models.list_discounts_response import ListDiscountsResponse
-from pagarmecoreapi.models.list_increments_response import ListIncrementsResponse
 from pagarmecoreapi.models.list_usages_response import ListUsagesResponse
-from pagarmecoreapi.models.get_period_response import GetPeriodResponse
+from pagarmecoreapi.models.get_increment_response import GetIncrementResponse
+from pagarmecoreapi.models.list_discounts_response import ListDiscountsResponse
+from pagarmecoreapi.models.list_subscriptions_response import ListSubscriptionsResponse
+from pagarmecoreapi.models.list_cycles_response import ListCyclesResponse
 from pagarmecoreapi.models.get_usage_report_response import GetUsageReportResponse
+from pagarmecoreapi.exceptions.error_exception import ErrorException
 
 class SubscriptionsController(BaseController):
 
@@ -31,7 +32,7 @@ class SubscriptionsController(BaseController):
 
     def update_subscription_card(self,
                                  subscription_id,
-                                 request,
+                                 body,
                                  idempotency_key=None):
         """Does a PATCH request to /subscriptions/{subscription_id}/card.
 
@@ -39,8 +40,7 @@ class SubscriptionsController(BaseController):
 
         Args:
             subscription_id (string): Subscription id
-            request (UpdateSubscriptionCardRequest): Request for updating a
-                card
+            body (UpdateSubscriptionCardRequest): Request for updating a card
             idempotency_key (string, optional): TODO: type description here.
                 Example: 
 
@@ -67,121 +67,33 @@ class SubscriptionsController(BaseController):
         # Prepare headers
         _headers = {
             'accept': 'application/json',
-            'content-type': 'application/json; charset=utf-8',
+            'ServiceRefererName': Configuration.service_referer_name,
+            'Content-Type': 'application/json',
             'idempotency-key': idempotency_key
         }
 
         # Prepare and execute request
-        _request = self.http_client.patch(_query_url, headers=_headers, parameters=APIHelper.json_serialize(request))
+        _request = self.http_client.patch(_query_url, headers=_headers, parameters=APIHelper.json_serialize(body))
         BasicAuth.apply(_request)
         _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
         self.validate_response(_context)
 
         # Return appropriate type
         return APIHelper.json_deserialize(_context.response.raw_body, GetSubscriptionResponse.from_dictionary)
-
-    def delete_usage(self,
-                     subscription_id,
-                     item_id,
-                     usage_id,
-                     idempotency_key=None):
-        """Does a DELETE request to /subscriptions/{subscription_id}/items/{item_id}/usages/{usage_id}.
-
-        Deletes a usage
-
-        Args:
-            subscription_id (string): The subscription id
-            item_id (string): The subscription item id
-            usage_id (string): The usage id
-            idempotency_key (string, optional): TODO: type description here.
-                Example: 
-
-        Returns:
-            GetUsageResponse: Response from the API. 
-
-        Raises:
-            APIException: When an error occurs while fetching the data from
-                the remote API. This exception includes the HTTP Response
-                code, an error message, and the HTTP body that was received in
-                the request.
-
-        """
-
-        # Prepare query URL
-        _url_path = '/subscriptions/{subscription_id}/items/{item_id}/usages/{usage_id}'
-        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
-            'subscription_id': subscription_id,
-            'item_id': item_id,
-            'usage_id': usage_id
-        })
-        _query_builder = Configuration.base_uri
-        _query_builder += _url_path
-        _query_url = APIHelper.clean_url(_query_builder)
-
-        # Prepare headers
-        _headers = {
-            'accept': 'application/json',
-            'idempotency-key': idempotency_key
-        }
-
-        # Prepare and execute request
-        _request = self.http_client.delete(_query_url, headers=_headers)
-        BasicAuth.apply(_request)
-        _context = self.execute_request(_request)
-        self.validate_response(_context)
-
-        # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, GetUsageResponse.from_dictionary)
-
-    def create_discount(self,
-                        subscription_id,
-                        request,
-                        idempotency_key=None):
-        """Does a POST request to /subscriptions/{subscription_id}/discounts.
-
-        Creates a discount
-
-        Args:
-            subscription_id (string): Subscription id
-            request (CreateDiscountRequest): Request for creating a discount
-            idempotency_key (string, optional): TODO: type description here.
-                Example: 
-
-        Returns:
-            GetDiscountResponse: Response from the API. 
-
-        Raises:
-            APIException: When an error occurs while fetching the data from
-                the remote API. This exception includes the HTTP Response
-                code, an error message, and the HTTP body that was received in
-                the request.
-
-        """
-
-        # Prepare query URL
-        _url_path = '/subscriptions/{subscription_id}/discounts'
-        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
-            'subscription_id': subscription_id
-        })
-        _query_builder = Configuration.base_uri
-        _query_builder += _url_path
-        _query_url = APIHelper.clean_url(_query_builder)
-
-        # Prepare headers
-        _headers = {
-            'accept': 'application/json',
-            'content-type': 'application/json; charset=utf-8',
-            'idempotency-key': idempotency_key
-        }
-
-        # Prepare and execute request
-        _request = self.http_client.post(_query_url, headers=_headers, parameters=APIHelper.json_serialize(request))
-        BasicAuth.apply(_request)
-        _context = self.execute_request(_request)
-        self.validate_response(_context)
-
-        # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, GetDiscountResponse.from_dictionary)
 
     def create_an_usage(self,
                         subscription_id,
@@ -221,6 +133,7 @@ class SubscriptionsController(BaseController):
         # Prepare headers
         _headers = {
             'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name,
             'idempotency-key': idempotency_key
         }
 
@@ -228,61 +141,28 @@ class SubscriptionsController(BaseController):
         _request = self.http_client.post(_query_url, headers=_headers)
         BasicAuth.apply(_request)
         _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
         self.validate_response(_context)
 
         # Return appropriate type
         return APIHelper.json_deserialize(_context.response.raw_body, GetUsageResponse.from_dictionary)
 
-    def update_current_cycle_status(self,
-                                    subscription_id,
-                                    request,
-                                    idempotency_key=None):
-        """Does a PATCH request to /subscriptions/{subscription_id}/cycle-status.
-
-        TODO: type endpoint description here.
-
-        Args:
-            subscription_id (string): Subscription Id
-            request (UpdateCurrentCycleStatusRequest): Request for updating
-                the end date of the subscription current status
-            idempotency_key (string, optional): TODO: type description here.
-                Example: 
-
-        Returns:
-            void: Response from the API. 
-
-        Raises:
-            APIException: When an error occurs while fetching the data from
-                the remote API. This exception includes the HTTP Response
-                code, an error message, and the HTTP body that was received in
-                the request.
-
-        """
-
-        # Prepare query URL
-        _url_path = '/subscriptions/{subscription_id}/cycle-status'
-        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
-            'subscription_id': subscription_id
-        })
-        _query_builder = Configuration.base_uri
-        _query_builder += _url_path
-        _query_url = APIHelper.clean_url(_query_builder)
-
-        # Prepare headers
-        _headers = {
-            'content-type': 'application/json; charset=utf-8',
-            'idempotency-key': idempotency_key
-        }
-
-        # Prepare and execute request
-        _request = self.http_client.patch(_query_url, headers=_headers, parameters=APIHelper.json_serialize(request))
-        BasicAuth.apply(_request)
-        _context = self.execute_request(_request)
-        self.validate_response(_context)
-
     def update_subscription_payment_method(self,
                                            subscription_id,
-                                           request,
+                                           body,
                                            idempotency_key=None):
         """Does a PATCH request to /subscriptions/{subscription_id}/payment-method.
 
@@ -290,7 +170,7 @@ class SubscriptionsController(BaseController):
 
         Args:
             subscription_id (string): Subscription id
-            request (UpdateSubscriptionPaymentMethodRequest): Request for
+            body (UpdateSubscriptionPaymentMethodRequest): Request for
                 updating the paymentmethod from a subscription
             idempotency_key (string, optional): TODO: type description here.
                 Example: 
@@ -318,18 +198,487 @@ class SubscriptionsController(BaseController):
         # Prepare headers
         _headers = {
             'accept': 'application/json',
-            'content-type': 'application/json; charset=utf-8',
+            'ServiceRefererName': Configuration.service_referer_name,
+            'Content-Type': 'application/json',
             'idempotency-key': idempotency_key
         }
 
         # Prepare and execute request
-        _request = self.http_client.patch(_query_url, headers=_headers, parameters=APIHelper.json_serialize(request))
+        _request = self.http_client.patch(_query_url, headers=_headers, parameters=APIHelper.json_serialize(body))
         BasicAuth.apply(_request)
         _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
         self.validate_response(_context)
 
         # Return appropriate type
         return APIHelper.json_deserialize(_context.response.raw_body, GetSubscriptionResponse.from_dictionary)
+
+    def create_subscription_item(self,
+                                 subscription_id,
+                                 body,
+                                 idempotency_key=None):
+        """Does a POST request to /subscriptions/{subscription_id}/items.
+
+        Creates a new Subscription item
+
+        Args:
+            subscription_id (string): Subscription id
+            body (CreateSubscriptionItemRequest): Request for creating a
+                subscription item
+            idempotency_key (string, optional): TODO: type description here.
+                Example: 
+
+        Returns:
+            GetSubscriptionItemResponse: Response from the API. 
+
+        Raises:
+            APIException: When an error occurs while fetching the data from
+                the remote API. This exception includes the HTTP Response
+                code, an error message, and the HTTP body that was received in
+                the request.
+
+        """
+
+        # Prepare query URL
+        _url_path = '/subscriptions/{subscription_id}/items'
+        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
+            'subscription_id': subscription_id
+        })
+        _query_builder = Configuration.base_uri
+        _query_builder += _url_path
+        _query_url = APIHelper.clean_url(_query_builder)
+
+        # Prepare headers
+        _headers = {
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name,
+            'Content-Type': 'application/json',
+            'idempotency-key': idempotency_key
+        }
+
+        # Prepare and execute request
+        _request = self.http_client.post(_query_url, headers=_headers, parameters=APIHelper.json_serialize(body))
+        BasicAuth.apply(_request)
+        _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
+        self.validate_response(_context)
+
+        # Return appropriate type
+        return APIHelper.json_deserialize(_context.response.raw_body, GetSubscriptionItemResponse.from_dictionary)
+
+    def get_subscription_item(self,
+                              subscription_id,
+                              item_id):
+        """Does a GET request to /subscriptions/{subscription_id}/items/{item_id}.
+
+        Get Subscription Item
+
+        Args:
+            subscription_id (string): Subscription Id
+            item_id (string): Item id
+
+        Returns:
+            GetSubscriptionItemResponse: Response from the API. 
+
+        Raises:
+            APIException: When an error occurs while fetching the data from
+                the remote API. This exception includes the HTTP Response
+                code, an error message, and the HTTP body that was received in
+                the request.
+
+        """
+
+        # Prepare query URL
+        _url_path = '/subscriptions/{subscription_id}/items/{item_id}'
+        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
+            'subscription_id': subscription_id,
+            'item_id': item_id
+        })
+        _query_builder = Configuration.base_uri
+        _query_builder += _url_path
+        _query_url = APIHelper.clean_url(_query_builder)
+
+        # Prepare headers
+        _headers = {
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name
+        }
+
+        # Prepare and execute request
+        _request = self.http_client.get(_query_url, headers=_headers)
+        BasicAuth.apply(_request)
+        _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
+        self.validate_response(_context)
+
+        # Return appropriate type
+        return APIHelper.json_deserialize(_context.response.raw_body, GetSubscriptionItemResponse.from_dictionary)
+
+    def update_subscription_affiliation_id(self,
+                                           subscription_id,
+                                           body,
+                                           idempotency_key=None):
+        """Does a PATCH request to /subscriptions/{subscription_id}/gateway-affiliation-id.
+
+        UpdateSubscriptionAffiliationId
+
+        Args:
+            subscription_id (string): TODO: type description here. Example: 
+            body (UpdateSubscriptionAffiliationIdRequest): Request for
+                updating a subscription affiliation id
+            idempotency_key (string, optional): TODO: type description here.
+                Example: 
+
+        Returns:
+            GetSubscriptionResponse: Response from the API. 
+
+        Raises:
+            APIException: When an error occurs while fetching the data from
+                the remote API. This exception includes the HTTP Response
+                code, an error message, and the HTTP body that was received in
+                the request.
+
+        """
+
+        # Prepare query URL
+        _url_path = '/subscriptions/{subscription_id}/gateway-affiliation-id'
+        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
+            'subscription_id': subscription_id
+        })
+        _query_builder = Configuration.base_uri
+        _query_builder += _url_path
+        _query_url = APIHelper.clean_url(_query_builder)
+
+        # Prepare headers
+        _headers = {
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name,
+            'Content-Type': 'application/json',
+            'idempotency-key': idempotency_key
+        }
+
+        # Prepare and execute request
+        _request = self.http_client.patch(_query_url, headers=_headers, parameters=APIHelper.json_serialize(body))
+        BasicAuth.apply(_request)
+        _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
+        self.validate_response(_context)
+
+        # Return appropriate type
+        return APIHelper.json_deserialize(_context.response.raw_body, GetSubscriptionResponse.from_dictionary)
+
+    def get_increments(self,
+                       subscription_id,
+                       page=None,
+                       size=None):
+        """Does a GET request to /subscriptions/{subscription_id}/increments/.
+
+        GetIncrements
+
+        Args:
+            subscription_id (string): The subscription id
+            page (int, optional): Page number
+            size (int, optional): Page size
+
+        Returns:
+            ListIncrementsResponse: Response from the API. 
+
+        Raises:
+            APIException: When an error occurs while fetching the data from
+                the remote API. This exception includes the HTTP Response
+                code, an error message, and the HTTP body that was received in
+                the request.
+
+        """
+
+        # Prepare query URL
+        _url_path = '/subscriptions/{subscription_id}/increments/'
+        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
+            'subscription_id': subscription_id
+        })
+        _query_builder = Configuration.base_uri
+        _query_builder += _url_path
+        _query_parameters = {
+            'page': page,
+            'size': size
+        }
+        _query_builder = APIHelper.append_url_with_query_parameters(_query_builder,
+            _query_parameters, Configuration.array_serialization)
+        _query_url = APIHelper.clean_url(_query_builder)
+
+        # Prepare headers
+        _headers = {
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name
+        }
+
+        # Prepare and execute request
+        _request = self.http_client.get(_query_url, headers=_headers)
+        BasicAuth.apply(_request)
+        _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
+        self.validate_response(_context)
+
+        # Return appropriate type
+        return APIHelper.json_deserialize(_context.response.raw_body, ListIncrementsResponse.from_dictionary)
+
+    def update_subscription_due_days(self,
+                                     subscription_id,
+                                     body,
+                                     idempotency_key=None):
+        """Does a PATCH request to /subscriptions/{subscription_id}/boleto-due-days.
+
+        Updates the boleto due days from a subscription
+
+        Args:
+            subscription_id (string): Subscription Id
+            body (UpdateSubscriptionDueDaysRequest): TODO: type description
+                here. Example: 
+            idempotency_key (string, optional): TODO: type description here.
+                Example: 
+
+        Returns:
+            GetSubscriptionResponse: Response from the API. 
+
+        Raises:
+            APIException: When an error occurs while fetching the data from
+                the remote API. This exception includes the HTTP Response
+                code, an error message, and the HTTP body that was received in
+                the request.
+
+        """
+
+        # Prepare query URL
+        _url_path = '/subscriptions/{subscription_id}/boleto-due-days'
+        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
+            'subscription_id': subscription_id
+        })
+        _query_builder = Configuration.base_uri
+        _query_builder += _url_path
+        _query_url = APIHelper.clean_url(_query_builder)
+
+        # Prepare headers
+        _headers = {
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name,
+            'Content-Type': 'application/json',
+            'idempotency-key': idempotency_key
+        }
+
+        # Prepare and execute request
+        _request = self.http_client.patch(_query_url, headers=_headers, parameters=APIHelper.json_serialize(body))
+        BasicAuth.apply(_request)
+        _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
+        self.validate_response(_context)
+
+        # Return appropriate type
+        return APIHelper.json_deserialize(_context.response.raw_body, GetSubscriptionResponse.from_dictionary)
+
+    def update_subscription_start_at(self,
+                                     subscription_id,
+                                     body,
+                                     idempotency_key=None):
+        """Does a PATCH request to /subscriptions/{subscription_id}/start-at.
+
+        Updates the start at date from a subscription
+
+        Args:
+            subscription_id (string): The subscription id
+            body (UpdateSubscriptionStartAtRequest): Request for updating the
+                subscription start date
+            idempotency_key (string, optional): TODO: type description here.
+                Example: 
+
+        Returns:
+            GetSubscriptionResponse: Response from the API. 
+
+        Raises:
+            APIException: When an error occurs while fetching the data from
+                the remote API. This exception includes the HTTP Response
+                code, an error message, and the HTTP body that was received in
+                the request.
+
+        """
+
+        # Prepare query URL
+        _url_path = '/subscriptions/{subscription_id}/start-at'
+        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
+            'subscription_id': subscription_id
+        })
+        _query_builder = Configuration.base_uri
+        _query_builder += _url_path
+        _query_url = APIHelper.clean_url(_query_builder)
+
+        # Prepare headers
+        _headers = {
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name,
+            'Content-Type': 'application/json',
+            'idempotency-key': idempotency_key
+        }
+
+        # Prepare and execute request
+        _request = self.http_client.patch(_query_url, headers=_headers, parameters=APIHelper.json_serialize(body))
+        BasicAuth.apply(_request)
+        _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
+        self.validate_response(_context)
+
+        # Return appropriate type
+        return APIHelper.json_deserialize(_context.response.raw_body, GetSubscriptionResponse.from_dictionary)
+
+    def get_subscription_cycle_by_id(self,
+                                     subscription_id,
+                                     cycle_id):
+        """Does a GET request to /subscriptions/{subscription_id}/cycles/{cycleId}.
+
+        GetSubscriptionCycleById
+
+        Args:
+            subscription_id (string): The subscription id
+            cycle_id (string): TODO: type description here. Example: 
+
+        Returns:
+            GetPeriodResponse: Response from the API. 
+
+        Raises:
+            APIException: When an error occurs while fetching the data from
+                the remote API. This exception includes the HTTP Response
+                code, an error message, and the HTTP body that was received in
+                the request.
+
+        """
+
+        # Prepare query URL
+        _url_path = '/subscriptions/{subscription_id}/cycles/{cycleId}'
+        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
+            'subscription_id': subscription_id,
+            'cycleId': cycle_id
+        })
+        _query_builder = Configuration.base_uri
+        _query_builder += _url_path
+        _query_url = APIHelper.clean_url(_query_builder)
+
+        # Prepare headers
+        _headers = {
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name
+        }
+
+        # Prepare and execute request
+        _request = self.http_client.get(_query_url, headers=_headers)
+        BasicAuth.apply(_request)
+        _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
+        self.validate_response(_context)
+
+        # Return appropriate type
+        return APIHelper.json_deserialize(_context.response.raw_body, GetPeriodResponse.from_dictionary)
 
     def delete_discount(self,
                         subscription_id,
@@ -369,6 +718,7 @@ class SubscriptionsController(BaseController):
         # Prepare headers
         _headers = {
             'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name,
             'idempotency-key': idempotency_key
         }
 
@@ -376,6 +726,20 @@ class SubscriptionsController(BaseController):
         _request = self.http_client.delete(_query_url, headers=_headers)
         BasicAuth.apply(_request)
         _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
         self.validate_response(_context)
 
         # Return appropriate type
@@ -442,28 +806,49 @@ class SubscriptionsController(BaseController):
 
         # Prepare headers
         _headers = {
-            'accept': 'application/json'
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name
         }
 
         # Prepare and execute request
         _request = self.http_client.get(_query_url, headers=_headers)
         BasicAuth.apply(_request)
         _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
         self.validate_response(_context)
 
         # Return appropriate type
         return APIHelper.json_deserialize(_context.response.raw_body, ListSubscriptionItemsResponse.from_dictionary)
 
-    def get_subscription_item(self,
-                              subscription_id,
-                              item_id):
-        """Does a GET request to /subscriptions/{subscription_id}/items/{item_id}.
+    def update_subscription_item(self,
+                                 subscription_id,
+                                 item_id,
+                                 body,
+                                 idempotency_key=None):
+        """Does a PUT request to /subscriptions/{subscription_id}/items/{item_id}.
 
-        Get Subscription Item
+        Updates a subscription item
 
         Args:
             subscription_id (string): Subscription Id
             item_id (string): Item id
+            body (UpdateSubscriptionItemRequest): Request for updating a
+                subscription item
+            idempotency_key (string, optional): TODO: type description here.
+                Example: 
 
         Returns:
             GetSubscriptionItemResponse: Response from the API. 
@@ -488,17 +873,962 @@ class SubscriptionsController(BaseController):
 
         # Prepare headers
         _headers = {
-            'accept': 'application/json'
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name,
+            'Content-Type': 'application/json',
+            'idempotency-key': idempotency_key
+        }
+
+        # Prepare and execute request
+        _request = self.http_client.put(_query_url, headers=_headers, parameters=APIHelper.json_serialize(body))
+        BasicAuth.apply(_request)
+        _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
+        self.validate_response(_context)
+
+        # Return appropriate type
+        return APIHelper.json_deserialize(_context.response.raw_body, GetSubscriptionItemResponse.from_dictionary)
+
+    def create_subscription(self,
+                            body,
+                            idempotency_key=None):
+        """Does a POST request to /subscriptions.
+
+        Creates a new subscription
+
+        Args:
+            body (CreateSubscriptionRequest): Request for creating a
+                subscription
+            idempotency_key (string, optional): TODO: type description here.
+                Example: 
+
+        Returns:
+            GetSubscriptionResponse: Response from the API. 
+
+        Raises:
+            APIException: When an error occurs while fetching the data from
+                the remote API. This exception includes the HTTP Response
+                code, an error message, and the HTTP body that was received in
+                the request.
+
+        """
+
+        # Prepare query URL
+        _url_path = '/subscriptions'
+        _query_builder = Configuration.base_uri
+        _query_builder += _url_path
+        _query_url = APIHelper.clean_url(_query_builder)
+
+        # Prepare headers
+        _headers = {
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name,
+            'Content-Type': 'application/json',
+            'idempotency-key': idempotency_key
+        }
+
+        # Prepare and execute request
+        _request = self.http_client.post(_query_url, headers=_headers, parameters=APIHelper.json_serialize(body))
+        BasicAuth.apply(_request)
+        _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
+        self.validate_response(_context)
+
+        # Return appropriate type
+        return APIHelper.json_deserialize(_context.response.raw_body, GetSubscriptionResponse.from_dictionary)
+
+    def get_discount_by_id(self,
+                           subscription_id,
+                           discount_id):
+        """Does a GET request to /subscriptions/{subscription_id}/discounts/{discountId}.
+
+        GetDiscountById
+
+        Args:
+            subscription_id (string): The subscription id
+            discount_id (string): TODO: type description here. Example: 
+
+        Returns:
+            GetDiscountResponse: Response from the API. 
+
+        Raises:
+            APIException: When an error occurs while fetching the data from
+                the remote API. This exception includes the HTTP Response
+                code, an error message, and the HTTP body that was received in
+                the request.
+
+        """
+
+        # Prepare query URL
+        _url_path = '/subscriptions/{subscription_id}/discounts/{discountId}'
+        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
+            'subscription_id': subscription_id,
+            'discountId': discount_id
+        })
+        _query_builder = Configuration.base_uri
+        _query_builder += _url_path
+        _query_url = APIHelper.clean_url(_query_builder)
+
+        # Prepare headers
+        _headers = {
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name
         }
 
         # Prepare and execute request
         _request = self.http_client.get(_query_url, headers=_headers)
         BasicAuth.apply(_request)
         _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
         self.validate_response(_context)
 
         # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, GetSubscriptionItemResponse.from_dictionary)
+        return APIHelper.json_deserialize(_context.response.raw_body, GetDiscountResponse.from_dictionary)
+
+    def update_subscription_billing_date(self,
+                                         subscription_id,
+                                         body,
+                                         idempotency_key=None):
+        """Does a PATCH request to /subscriptions/{subscription_id}/billing-date.
+
+        Updates the billing date from a subscription
+
+        Args:
+            subscription_id (string): The subscription id
+            body (UpdateSubscriptionBillingDateRequest): Request for updating
+                the subscription billing date
+            idempotency_key (string, optional): TODO: type description here.
+                Example: 
+
+        Returns:
+            GetSubscriptionResponse: Response from the API. 
+
+        Raises:
+            APIException: When an error occurs while fetching the data from
+                the remote API. This exception includes the HTTP Response
+                code, an error message, and the HTTP body that was received in
+                the request.
+
+        """
+
+        # Prepare query URL
+        _url_path = '/subscriptions/{subscription_id}/billing-date'
+        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
+            'subscription_id': subscription_id
+        })
+        _query_builder = Configuration.base_uri
+        _query_builder += _url_path
+        _query_url = APIHelper.clean_url(_query_builder)
+
+        # Prepare headers
+        _headers = {
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name,
+            'Content-Type': 'application/json',
+            'idempotency-key': idempotency_key
+        }
+
+        # Prepare and execute request
+        _request = self.http_client.patch(_query_url, headers=_headers, parameters=APIHelper.json_serialize(body))
+        BasicAuth.apply(_request)
+        _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
+        self.validate_response(_context)
+
+        # Return appropriate type
+        return APIHelper.json_deserialize(_context.response.raw_body, GetSubscriptionResponse.from_dictionary)
+
+    def update_latest_period_end_at(self,
+                                    subscription_id,
+                                    body,
+                                    idempotency_key=None):
+        """Does a PATCH request to /subscriptions/{subscription_id}/periods/latest/end-at.
+
+        UpdateLatestPeriodEndAt
+
+        Args:
+            subscription_id (string): TODO: type description here. Example: 
+            body (UpdateCurrentCycleEndDateRequest): Request for updating the
+                end date of the current signature cycle
+            idempotency_key (string, optional): TODO: type description here.
+                Example: 
+
+        Returns:
+            GetSubscriptionResponse: Response from the API. 
+
+        Raises:
+            APIException: When an error occurs while fetching the data from
+                the remote API. This exception includes the HTTP Response
+                code, an error message, and the HTTP body that was received in
+                the request.
+
+        """
+
+        # Prepare query URL
+        _url_path = '/subscriptions/{subscription_id}/periods/latest/end-at'
+        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
+            'subscription_id': subscription_id
+        })
+        _query_builder = Configuration.base_uri
+        _query_builder += _url_path
+        _query_url = APIHelper.clean_url(_query_builder)
+
+        # Prepare headers
+        _headers = {
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name,
+            'Content-Type': 'application/json',
+            'idempotency-key': idempotency_key
+        }
+
+        # Prepare and execute request
+        _request = self.http_client.patch(_query_url, headers=_headers, parameters=APIHelper.json_serialize(body))
+        BasicAuth.apply(_request)
+        _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
+        self.validate_response(_context)
+
+        # Return appropriate type
+        return APIHelper.json_deserialize(_context.response.raw_body, GetSubscriptionResponse.from_dictionary)
+
+    def create_discount(self,
+                        subscription_id,
+                        body,
+                        idempotency_key=None):
+        """Does a POST request to /subscriptions/{subscription_id}/discounts.
+
+        Creates a discount
+
+        Args:
+            subscription_id (string): Subscription id
+            body (CreateDiscountRequest): Request for creating a discount
+            idempotency_key (string, optional): TODO: type description here.
+                Example: 
+
+        Returns:
+            GetDiscountResponse: Response from the API. 
+
+        Raises:
+            APIException: When an error occurs while fetching the data from
+                the remote API. This exception includes the HTTP Response
+                code, an error message, and the HTTP body that was received in
+                the request.
+
+        """
+
+        # Prepare query URL
+        _url_path = '/subscriptions/{subscription_id}/discounts'
+        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
+            'subscription_id': subscription_id
+        })
+        _query_builder = Configuration.base_uri
+        _query_builder += _url_path
+        _query_url = APIHelper.clean_url(_query_builder)
+
+        # Prepare headers
+        _headers = {
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name,
+            'Content-Type': 'application/json',
+            'idempotency-key': idempotency_key
+        }
+
+        # Prepare and execute request
+        _request = self.http_client.post(_query_url, headers=_headers, parameters=APIHelper.json_serialize(body))
+        BasicAuth.apply(_request)
+        _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
+        self.validate_response(_context)
+
+        # Return appropriate type
+        return APIHelper.json_deserialize(_context.response.raw_body, GetDiscountResponse.from_dictionary)
+
+    def delete_usage(self,
+                     subscription_id,
+                     item_id,
+                     usage_id,
+                     idempotency_key=None):
+        """Does a DELETE request to /subscriptions/{subscription_id}/items/{item_id}/usages/{usage_id}.
+
+        Deletes a usage
+
+        Args:
+            subscription_id (string): The subscription id
+            item_id (string): The subscription item id
+            usage_id (string): The usage id
+            idempotency_key (string, optional): TODO: type description here.
+                Example: 
+
+        Returns:
+            GetUsageResponse: Response from the API. 
+
+        Raises:
+            APIException: When an error occurs while fetching the data from
+                the remote API. This exception includes the HTTP Response
+                code, an error message, and the HTTP body that was received in
+                the request.
+
+        """
+
+        # Prepare query URL
+        _url_path = '/subscriptions/{subscription_id}/items/{item_id}/usages/{usage_id}'
+        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
+            'subscription_id': subscription_id,
+            'item_id': item_id,
+            'usage_id': usage_id
+        })
+        _query_builder = Configuration.base_uri
+        _query_builder += _url_path
+        _query_url = APIHelper.clean_url(_query_builder)
+
+        # Prepare headers
+        _headers = {
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name,
+            'idempotency-key': idempotency_key
+        }
+
+        # Prepare and execute request
+        _request = self.http_client.delete(_query_url, headers=_headers)
+        BasicAuth.apply(_request)
+        _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
+        self.validate_response(_context)
+
+        # Return appropriate type
+        return APIHelper.json_deserialize(_context.response.raw_body, GetUsageResponse.from_dictionary)
+
+    def get_usages(self,
+                   subscription_id,
+                   item_id,
+                   page=None,
+                   size=None,
+                   code=None,
+                   group=None,
+                   used_since=None,
+                   used_until=None):
+        """Does a GET request to /subscriptions/{subscription_id}/items/{item_id}/usages.
+
+        Lists all usages from a subscription item
+
+        Args:
+            subscription_id (string): The subscription id
+            item_id (string): The subscription item id
+            page (int, optional): Page number
+            size (int, optional): Page size
+            code (string, optional): Identification code in the client system
+            group (string, optional): Identification group in the client
+                system
+            used_since (datetime, optional): TODO: type description here.
+                Example: 
+            used_until (datetime, optional): TODO: type description here.
+                Example: 
+
+        Returns:
+            ListUsagesResponse: Response from the API. 
+
+        Raises:
+            APIException: When an error occurs while fetching the data from
+                the remote API. This exception includes the HTTP Response
+                code, an error message, and the HTTP body that was received in
+                the request.
+
+        """
+
+        # Prepare query URL
+        _url_path = '/subscriptions/{subscription_id}/items/{item_id}/usages'
+        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
+            'subscription_id': subscription_id,
+            'item_id': item_id
+        })
+        _query_builder = Configuration.base_uri
+        _query_builder += _url_path
+        _query_parameters = {
+            'page': page,
+            'size': size,
+            'code': code,
+            'group': group,
+            'used_since': APIHelper.when_defined(APIHelper.RFC3339DateTime, used_since),
+            'used_until': APIHelper.when_defined(APIHelper.RFC3339DateTime, used_until)
+        }
+        _query_builder = APIHelper.append_url_with_query_parameters(_query_builder,
+            _query_parameters, Configuration.array_serialization)
+        _query_url = APIHelper.clean_url(_query_builder)
+
+        # Prepare headers
+        _headers = {
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name
+        }
+
+        # Prepare and execute request
+        _request = self.http_client.get(_query_url, headers=_headers)
+        BasicAuth.apply(_request)
+        _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
+        self.validate_response(_context)
+
+        # Return appropriate type
+        return APIHelper.json_deserialize(_context.response.raw_body, ListUsagesResponse.from_dictionary)
+
+    def update_current_cycle_status(self,
+                                    subscription_id,
+                                    body,
+                                    idempotency_key=None):
+        """Does a PATCH request to /subscriptions/{subscription_id}/cycle-status.
+
+        UpdateCurrentCycleStatus
+
+        Args:
+            subscription_id (string): Subscription Id
+            body (UpdateCurrentCycleStatusRequest): Request for updating the
+                end date of the subscription current status
+            idempotency_key (string, optional): TODO: type description here.
+                Example: 
+
+        Returns:
+            void: Response from the API. 
+
+        Raises:
+            APIException: When an error occurs while fetching the data from
+                the remote API. This exception includes the HTTP Response
+                code, an error message, and the HTTP body that was received in
+                the request.
+
+        """
+
+        # Prepare query URL
+        _url_path = '/subscriptions/{subscription_id}/cycle-status'
+        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
+            'subscription_id': subscription_id
+        })
+        _query_builder = Configuration.base_uri
+        _query_builder += _url_path
+        _query_url = APIHelper.clean_url(_query_builder)
+
+        # Prepare headers
+        _headers = {
+            'ServiceRefererName': Configuration.service_referer_name,
+            'Content-Type': 'application/json',
+            'idempotency-key': idempotency_key
+        }
+
+        # Prepare and execute request
+        _request = self.http_client.patch(_query_url, headers=_headers, parameters=APIHelper.json_serialize(body))
+        BasicAuth.apply(_request)
+        _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
+        self.validate_response(_context)
+
+    def cancel_subscription(self,
+                            subscription_id,
+                            idempotency_key=None,
+                            body=None):
+        """Does a DELETE request to /subscriptions/{subscription_id}.
+
+        Cancels a subscription
+
+        Args:
+            subscription_id (string): Subscription id
+            idempotency_key (string, optional): TODO: type description here.
+                Example: 
+            body (CreateCancelSubscriptionRequest, optional): Request for
+                cancelling a subscription
+
+        Returns:
+            GetSubscriptionResponse: Response from the API. 
+
+        Raises:
+            APIException: When an error occurs while fetching the data from
+                the remote API. This exception includes the HTTP Response
+                code, an error message, and the HTTP body that was received in
+                the request.
+
+        """
+
+        # Prepare query URL
+        _url_path = '/subscriptions/{subscription_id}'
+        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
+            'subscription_id': subscription_id
+        })
+        _query_builder = Configuration.base_uri
+        _query_builder += _url_path
+        _query_url = APIHelper.clean_url(_query_builder)
+
+        # Prepare headers
+        _headers = {
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name,
+            'Content-Type': 'application/json',
+            'idempotency-key': idempotency_key
+        }
+
+        # Prepare and execute request
+        _request = self.http_client.delete(_query_url, headers=_headers, parameters=APIHelper.json_serialize(body))
+        BasicAuth.apply(_request)
+        _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
+        self.validate_response(_context)
+
+        # Return appropriate type
+        return APIHelper.json_deserialize(_context.response.raw_body, GetSubscriptionResponse.from_dictionary)
+
+    def create_increment(self,
+                         subscription_id,
+                         body,
+                         idempotency_key=None):
+        """Does a POST request to /subscriptions/{subscription_id}/increments.
+
+        Creates a increment
+
+        Args:
+            subscription_id (string): Subscription id
+            body (CreateIncrementRequest): Request for creating a increment
+            idempotency_key (string, optional): TODO: type description here.
+                Example: 
+
+        Returns:
+            GetIncrementResponse: Response from the API. 
+
+        Raises:
+            APIException: When an error occurs while fetching the data from
+                the remote API. This exception includes the HTTP Response
+                code, an error message, and the HTTP body that was received in
+                the request.
+
+        """
+
+        # Prepare query URL
+        _url_path = '/subscriptions/{subscription_id}/increments'
+        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
+            'subscription_id': subscription_id
+        })
+        _query_builder = Configuration.base_uri
+        _query_builder += _url_path
+        _query_url = APIHelper.clean_url(_query_builder)
+
+        # Prepare headers
+        _headers = {
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name,
+            'Content-Type': 'application/json',
+            'idempotency-key': idempotency_key
+        }
+
+        # Prepare and execute request
+        _request = self.http_client.post(_query_url, headers=_headers, parameters=APIHelper.json_serialize(body))
+        BasicAuth.apply(_request)
+        _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
+        self.validate_response(_context)
+
+        # Return appropriate type
+        return APIHelper.json_deserialize(_context.response.raw_body, GetIncrementResponse.from_dictionary)
+
+    def update_subscription_metadata(self,
+                                     subscription_id,
+                                     body,
+                                     idempotency_key=None):
+        """Does a PATCH request to /Subscriptions/{subscription_id}/metadata.
+
+        Updates the metadata from a subscription
+
+        Args:
+            subscription_id (string): The subscription id
+            body (UpdateMetadataRequest): Request for updating the subscrption
+                metadata
+            idempotency_key (string, optional): TODO: type description here.
+                Example: 
+
+        Returns:
+            GetSubscriptionResponse: Response from the API. 
+
+        Raises:
+            APIException: When an error occurs while fetching the data from
+                the remote API. This exception includes the HTTP Response
+                code, an error message, and the HTTP body that was received in
+                the request.
+
+        """
+
+        # Prepare query URL
+        _url_path = '/Subscriptions/{subscription_id}/metadata'
+        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
+            'subscription_id': subscription_id
+        })
+        _query_builder = Configuration.base_uri
+        _query_builder += _url_path
+        _query_url = APIHelper.clean_url(_query_builder)
+
+        # Prepare headers
+        _headers = {
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name,
+            'Content-Type': 'application/json',
+            'idempotency-key': idempotency_key
+        }
+
+        # Prepare and execute request
+        _request = self.http_client.patch(_query_url, headers=_headers, parameters=APIHelper.json_serialize(body))
+        BasicAuth.apply(_request)
+        _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
+        self.validate_response(_context)
+
+        # Return appropriate type
+        return APIHelper.json_deserialize(_context.response.raw_body, GetSubscriptionResponse.from_dictionary)
+
+    def get_discounts(self,
+                      subscription_id,
+                      page,
+                      size):
+        """Does a GET request to /subscriptions/{subscription_id}/discounts/.
+
+        GetDiscounts
+
+        Args:
+            subscription_id (string): The subscription id
+            page (int): Page number
+            size (int): Page size
+
+        Returns:
+            ListDiscountsResponse: Response from the API. 
+
+        Raises:
+            APIException: When an error occurs while fetching the data from
+                the remote API. This exception includes the HTTP Response
+                code, an error message, and the HTTP body that was received in
+                the request.
+
+        """
+
+        # Prepare query URL
+        _url_path = '/subscriptions/{subscription_id}/discounts/'
+        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
+            'subscription_id': subscription_id
+        })
+        _query_builder = Configuration.base_uri
+        _query_builder += _url_path
+        _query_parameters = {
+            'page': page,
+            'size': size
+        }
+        _query_builder = APIHelper.append_url_with_query_parameters(_query_builder,
+            _query_parameters, Configuration.array_serialization)
+        _query_url = APIHelper.clean_url(_query_builder)
+
+        # Prepare headers
+        _headers = {
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name
+        }
+
+        # Prepare and execute request
+        _request = self.http_client.get(_query_url, headers=_headers)
+        BasicAuth.apply(_request)
+        _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
+        self.validate_response(_context)
+
+        # Return appropriate type
+        return APIHelper.json_deserialize(_context.response.raw_body, ListDiscountsResponse.from_dictionary)
+
+    def update_subscription_minium_price(self,
+                                         subscription_id,
+                                         body,
+                                         idempotency_key=None):
+        """Does a PATCH request to /subscriptions/{subscription_id}/minimum_price.
+
+        Atualização do valor mínimo da assinatura
+
+        Args:
+            subscription_id (string): Subscription Id
+            body (UpdateSubscriptionMinimumPriceRequest): Request da
+                requisição com o valor mínimo que será configurado
+            idempotency_key (string, optional): TODO: type description here.
+                Example: 
+
+        Returns:
+            GetSubscriptionResponse: Response from the API. 
+
+        Raises:
+            APIException: When an error occurs while fetching the data from
+                the remote API. This exception includes the HTTP Response
+                code, an error message, and the HTTP body that was received in
+                the request.
+
+        """
+
+        # Prepare query URL
+        _url_path = '/subscriptions/{subscription_id}/minimum_price'
+        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
+            'subscription_id': subscription_id
+        })
+        _query_builder = Configuration.base_uri
+        _query_builder += _url_path
+        _query_url = APIHelper.clean_url(_query_builder)
+
+        # Prepare headers
+        _headers = {
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name,
+            'Content-Type': 'application/json',
+            'idempotency-key': idempotency_key
+        }
+
+        # Prepare and execute request
+        _request = self.http_client.patch(_query_url, headers=_headers, parameters=APIHelper.json_serialize(body))
+        BasicAuth.apply(_request)
+        _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
+        self.validate_response(_context)
+
+        # Return appropriate type
+        return APIHelper.json_deserialize(_context.response.raw_body, GetSubscriptionResponse.from_dictionary)
+
+    def update_split_subscription(self,
+                                  id,
+                                  body):
+        """Does a PATCH request to /subscriptions/{id}/split.
+
+        UpdateSplitSubscription
+
+        Args:
+            id (string): Subscription's id
+            body (UpdateSubscriptionSplitRequest): TODO: type description
+                here. Example: 
+
+        Returns:
+            GetSubscriptionResponse: Response from the API. 
+
+        Raises:
+            APIException: When an error occurs while fetching the data from
+                the remote API. This exception includes the HTTP Response
+                code, an error message, and the HTTP body that was received in
+                the request.
+
+        """
+
+        # Prepare query URL
+        _url_path = '/subscriptions/{id}/split'
+        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
+            'id': id
+        })
+        _query_builder = Configuration.base_uri
+        _query_builder += _url_path
+        _query_url = APIHelper.clean_url(_query_builder)
+
+        # Prepare headers
+        _headers = {
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name,
+            'Content-Type': 'application/json'
+        }
+
+        # Prepare and execute request
+        _request = self.http_client.patch(_query_url, headers=_headers, parameters=APIHelper.json_serialize(body))
+        BasicAuth.apply(_request)
+        _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
+        self.validate_response(_context)
+
+        # Return appropriate type
+        return APIHelper.json_deserialize(_context.response.raw_body, GetSubscriptionResponse.from_dictionary)
 
     def get_subscriptions(self,
                           page=None,
@@ -572,32 +1902,41 @@ class SubscriptionsController(BaseController):
 
         # Prepare headers
         _headers = {
-            'accept': 'application/json'
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name
         }
 
         # Prepare and execute request
         _request = self.http_client.get(_query_url, headers=_headers)
         BasicAuth.apply(_request)
         _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
         self.validate_response(_context)
 
         # Return appropriate type
         return APIHelper.json_deserialize(_context.response.raw_body, ListSubscriptionsResponse.from_dictionary)
 
-    def cancel_subscription(self,
-                            subscription_id,
-                            request=None,
-                            idempotency_key=None):
-        """Does a DELETE request to /subscriptions/{subscription_id}.
+    def get_subscription(self,
+                         subscription_id):
+        """Does a GET request to /subscriptions/{subscription_id}.
 
-        Cancels a subscription
+        Gets a subscription
 
         Args:
             subscription_id (string): Subscription id
-            request (CreateCancelSubscriptionRequest, optional): Request for
-                cancelling a subscription
-            idempotency_key (string, optional): TODO: type description here.
-                Example: 
 
         Returns:
             GetSubscriptionResponse: Response from the API. 
@@ -622,312 +1961,27 @@ class SubscriptionsController(BaseController):
         # Prepare headers
         _headers = {
             'accept': 'application/json',
-            'content-type': 'application/json; charset=utf-8',
-            'idempotency-key': idempotency_key
-        }
-
-        # Prepare and execute request
-        _request = self.http_client.delete(_query_url, headers=_headers, parameters=APIHelper.json_serialize(request))
-        BasicAuth.apply(_request)
-        _context = self.execute_request(_request)
-        self.validate_response(_context)
-
-        # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, GetSubscriptionResponse.from_dictionary)
-
-    def create_increment(self,
-                         subscription_id,
-                         request,
-                         idempotency_key=None):
-        """Does a POST request to /subscriptions/{subscription_id}/increments.
-
-        Creates a increment
-
-        Args:
-            subscription_id (string): Subscription id
-            request (CreateIncrementRequest): Request for creating a
-                increment
-            idempotency_key (string, optional): TODO: type description here.
-                Example: 
-
-        Returns:
-            GetIncrementResponse: Response from the API. 
-
-        Raises:
-            APIException: When an error occurs while fetching the data from
-                the remote API. This exception includes the HTTP Response
-                code, an error message, and the HTTP body that was received in
-                the request.
-
-        """
-
-        # Prepare query URL
-        _url_path = '/subscriptions/{subscription_id}/increments'
-        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
-            'subscription_id': subscription_id
-        })
-        _query_builder = Configuration.base_uri
-        _query_builder += _url_path
-        _query_url = APIHelper.clean_url(_query_builder)
-
-        # Prepare headers
-        _headers = {
-            'accept': 'application/json',
-            'content-type': 'application/json; charset=utf-8',
-            'idempotency-key': idempotency_key
-        }
-
-        # Prepare and execute request
-        _request = self.http_client.post(_query_url, headers=_headers, parameters=APIHelper.json_serialize(request))
-        BasicAuth.apply(_request)
-        _context = self.execute_request(_request)
-        self.validate_response(_context)
-
-        # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, GetIncrementResponse.from_dictionary)
-
-    def create_usage(self,
-                     subscription_id,
-                     item_id,
-                     body,
-                     idempotency_key=None):
-        """Does a POST request to /subscriptions/{subscription_id}/items/{item_id}/usages.
-
-        Creates a usage
-
-        Args:
-            subscription_id (string): Subscription Id
-            item_id (string): Item id
-            body (CreateUsageRequest): Request for creating a usage
-            idempotency_key (string, optional): TODO: type description here.
-                Example: 
-
-        Returns:
-            GetUsageResponse: Response from the API. 
-
-        Raises:
-            APIException: When an error occurs while fetching the data from
-                the remote API. This exception includes the HTTP Response
-                code, an error message, and the HTTP body that was received in
-                the request.
-
-        """
-
-        # Prepare query URL
-        _url_path = '/subscriptions/{subscription_id}/items/{item_id}/usages'
-        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
-            'subscription_id': subscription_id,
-            'item_id': item_id
-        })
-        _query_builder = Configuration.base_uri
-        _query_builder += _url_path
-        _query_url = APIHelper.clean_url(_query_builder)
-
-        # Prepare headers
-        _headers = {
-            'accept': 'application/json',
-            'content-type': 'application/json; charset=utf-8',
-            'idempotency-key': idempotency_key
-        }
-
-        # Prepare and execute request
-        _request = self.http_client.post(_query_url, headers=_headers, parameters=APIHelper.json_serialize(body))
-        BasicAuth.apply(_request)
-        _context = self.execute_request(_request)
-        self.validate_response(_context)
-
-        # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, GetUsageResponse.from_dictionary)
-
-    def create_subscription(self,
-                            body,
-                            idempotency_key=None):
-        """Does a POST request to /subscriptions.
-
-        Creates a new subscription
-
-        Args:
-            body (CreateSubscriptionRequest): Request for creating a
-                subscription
-            idempotency_key (string, optional): TODO: type description here.
-                Example: 
-
-        Returns:
-            GetSubscriptionResponse: Response from the API. 
-
-        Raises:
-            APIException: When an error occurs while fetching the data from
-                the remote API. This exception includes the HTTP Response
-                code, an error message, and the HTTP body that was received in
-                the request.
-
-        """
-
-        # Prepare query URL
-        _url_path = '/subscriptions'
-        _query_builder = Configuration.base_uri
-        _query_builder += _url_path
-        _query_url = APIHelper.clean_url(_query_builder)
-
-        # Prepare headers
-        _headers = {
-            'accept': 'application/json',
-            'content-type': 'application/json; charset=utf-8',
-            'idempotency-key': idempotency_key
-        }
-
-        # Prepare and execute request
-        _request = self.http_client.post(_query_url, headers=_headers, parameters=APIHelper.json_serialize(body))
-        BasicAuth.apply(_request)
-        _context = self.execute_request(_request)
-        self.validate_response(_context)
-
-        # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, GetSubscriptionResponse.from_dictionary)
-
-    def get_discount_by_id(self,
-                           subscription_id,
-                           discount_id):
-        """Does a GET request to /subscriptions/{subscription_id}/discounts/{discountId}.
-
-        TODO: type endpoint description here.
-
-        Args:
-            subscription_id (string): The subscription id
-            discount_id (string): TODO: type description here. Example: 
-
-        Returns:
-            GetDiscountResponse: Response from the API. 
-
-        Raises:
-            APIException: When an error occurs while fetching the data from
-                the remote API. This exception includes the HTTP Response
-                code, an error message, and the HTTP body that was received in
-                the request.
-
-        """
-
-        # Prepare query URL
-        _url_path = '/subscriptions/{subscription_id}/discounts/{discountId}'
-        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
-            'subscription_id': subscription_id,
-            'discountId': discount_id
-        })
-        _query_builder = Configuration.base_uri
-        _query_builder += _url_path
-        _query_url = APIHelper.clean_url(_query_builder)
-
-        # Prepare headers
-        _headers = {
-            'accept': 'application/json'
+            'ServiceRefererName': Configuration.service_referer_name
         }
 
         # Prepare and execute request
         _request = self.http_client.get(_query_url, headers=_headers)
         BasicAuth.apply(_request)
         _context = self.execute_request(_request)
-        self.validate_response(_context)
 
-        # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, GetDiscountResponse.from_dictionary)
-
-    def update_subscription_affiliation_id(self,
-                                           subscription_id,
-                                           request,
-                                           idempotency_key=None):
-        """Does a PATCH request to /subscriptions/{subscription_id}/gateway-affiliation-id.
-
-        TODO: type endpoint description here.
-
-        Args:
-            subscription_id (string): TODO: type description here. Example: 
-            request (UpdateSubscriptionAffiliationIdRequest): Request for
-                updating a subscription affiliation id
-            idempotency_key (string, optional): TODO: type description here.
-                Example: 
-
-        Returns:
-            GetSubscriptionResponse: Response from the API. 
-
-        Raises:
-            APIException: When an error occurs while fetching the data from
-                the remote API. This exception includes the HTTP Response
-                code, an error message, and the HTTP body that was received in
-                the request.
-
-        """
-
-        # Prepare query URL
-        _url_path = '/subscriptions/{subscription_id}/gateway-affiliation-id'
-        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
-            'subscription_id': subscription_id
-        })
-        _query_builder = Configuration.base_uri
-        _query_builder += _url_path
-        _query_url = APIHelper.clean_url(_query_builder)
-
-        # Prepare headers
-        _headers = {
-            'accept': 'application/json',
-            'content-type': 'application/json; charset=utf-8',
-            'idempotency-key': idempotency_key
-        }
-
-        # Prepare and execute request
-        _request = self.http_client.patch(_query_url, headers=_headers, parameters=APIHelper.json_serialize(request))
-        BasicAuth.apply(_request)
-        _context = self.execute_request(_request)
-        self.validate_response(_context)
-
-        # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, GetSubscriptionResponse.from_dictionary)
-
-    def update_subscription_metadata(self,
-                                     subscription_id,
-                                     request,
-                                     idempotency_key=None):
-        """Does a PATCH request to /Subscriptions/{subscription_id}/metadata.
-
-        Updates the metadata from a subscription
-
-        Args:
-            subscription_id (string): The subscription id
-            request (UpdateMetadataRequest): Request for updating the
-                subscrption metadata
-            idempotency_key (string, optional): TODO: type description here.
-                Example: 
-
-        Returns:
-            GetSubscriptionResponse: Response from the API. 
-
-        Raises:
-            APIException: When an error occurs while fetching the data from
-                the remote API. This exception includes the HTTP Response
-                code, an error message, and the HTTP body that was received in
-                the request.
-
-        """
-
-        # Prepare query URL
-        _url_path = '/Subscriptions/{subscription_id}/metadata'
-        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
-            'subscription_id': subscription_id
-        })
-        _query_builder = Configuration.base_uri
-        _query_builder += _url_path
-        _query_url = APIHelper.clean_url(_query_builder)
-
-        # Prepare headers
-        _headers = {
-            'accept': 'application/json',
-            'content-type': 'application/json; charset=utf-8',
-            'idempotency-key': idempotency_key
-        }
-
-        # Prepare and execute request
-        _request = self.http_client.patch(_query_url, headers=_headers, parameters=APIHelper.json_serialize(request))
-        BasicAuth.apply(_request)
-        _context = self.execute_request(_request)
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
         self.validate_response(_context)
 
         # Return appropriate type
@@ -971,6 +2025,7 @@ class SubscriptionsController(BaseController):
         # Prepare headers
         _headers = {
             'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name,
             'idempotency-key': idempotency_key
         }
 
@@ -978,6 +2033,81 @@ class SubscriptionsController(BaseController):
         _request = self.http_client.delete(_query_url, headers=_headers)
         BasicAuth.apply(_request)
         _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
+        self.validate_response(_context)
+
+        # Return appropriate type
+        return APIHelper.json_deserialize(_context.response.raw_body, GetIncrementResponse.from_dictionary)
+
+    def get_increment_by_id(self,
+                            subscription_id,
+                            increment_id):
+        """Does a GET request to /subscriptions/{subscription_id}/increments/{increment_id}.
+
+        GetIncrementById
+
+        Args:
+            subscription_id (string): The subscription Id
+            increment_id (string): The increment Id
+
+        Returns:
+            GetIncrementResponse: Response from the API. 
+
+        Raises:
+            APIException: When an error occurs while fetching the data from
+                the remote API. This exception includes the HTTP Response
+                code, an error message, and the HTTP body that was received in
+                the request.
+
+        """
+
+        # Prepare query URL
+        _url_path = '/subscriptions/{subscription_id}/increments/{increment_id}'
+        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
+            'subscription_id': subscription_id,
+            'increment_id': increment_id
+        })
+        _query_builder = Configuration.base_uri
+        _query_builder += _url_path
+        _query_url = APIHelper.clean_url(_query_builder)
+
+        # Prepare headers
+        _headers = {
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name
+        }
+
+        # Prepare and execute request
+        _request = self.http_client.get(_query_url, headers=_headers)
+        BasicAuth.apply(_request)
+        _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
         self.validate_response(_context)
 
         # Return appropriate type
@@ -989,7 +2119,7 @@ class SubscriptionsController(BaseController):
                                 size):
         """Does a GET request to /subscriptions/{subscription_id}/cycles.
 
-        TODO: type endpoint description here.
+        GetSubscriptionCycles
 
         Args:
             subscription_id (string): Subscription Id
@@ -1024,134 +2154,47 @@ class SubscriptionsController(BaseController):
 
         # Prepare headers
         _headers = {
-            'accept': 'application/json'
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name
         }
 
         # Prepare and execute request
         _request = self.http_client.get(_query_url, headers=_headers)
         BasicAuth.apply(_request)
         _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
         self.validate_response(_context)
 
         # Return appropriate type
         return APIHelper.json_deserialize(_context.response.raw_body, ListCyclesResponse.from_dictionary)
 
-    def get_increment_by_id(self,
-                            subscription_id,
-                            increment_id):
-        """Does a GET request to /subscriptions/{subscription_id}/increments/{increment_id}.
+    def renew_subscription(self,
+                           subscription_id,
+                           idempotency_key=None):
+        """Does a POST request to /subscriptions/{subscription_id}/cycles.
 
-        TODO: type endpoint description here.
-
-        Args:
-            subscription_id (string): The subscription Id
-            increment_id (string): The increment Id
-
-        Returns:
-            GetIncrementResponse: Response from the API. 
-
-        Raises:
-            APIException: When an error occurs while fetching the data from
-                the remote API. This exception includes the HTTP Response
-                code, an error message, and the HTTP body that was received in
-                the request.
-
-        """
-
-        # Prepare query URL
-        _url_path = '/subscriptions/{subscription_id}/increments/{increment_id}'
-        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
-            'subscription_id': subscription_id,
-            'increment_id': increment_id
-        })
-        _query_builder = Configuration.base_uri
-        _query_builder += _url_path
-        _query_url = APIHelper.clean_url(_query_builder)
-
-        # Prepare headers
-        _headers = {
-            'accept': 'application/json'
-        }
-
-        # Prepare and execute request
-        _request = self.http_client.get(_query_url, headers=_headers)
-        BasicAuth.apply(_request)
-        _context = self.execute_request(_request)
-        self.validate_response(_context)
-
-        # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, GetIncrementResponse.from_dictionary)
-
-    def get_discounts(self,
-                      subscription_id,
-                      page,
-                      size):
-        """Does a GET request to /subscriptions/{subscription_id}/discounts/.
-
-        TODO: type endpoint description here.
+        RenewSubscription
 
         Args:
-            subscription_id (string): The subscription id
-            page (int): Page number
-            size (int): Page size
-
-        Returns:
-            ListDiscountsResponse: Response from the API. 
-
-        Raises:
-            APIException: When an error occurs while fetching the data from
-                the remote API. This exception includes the HTTP Response
-                code, an error message, and the HTTP body that was received in
-                the request.
-
-        """
-
-        # Prepare query URL
-        _url_path = '/subscriptions/{subscription_id}/discounts/'
-        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
-            'subscription_id': subscription_id
-        })
-        _query_builder = Configuration.base_uri
-        _query_builder += _url_path
-        _query_parameters = {
-            'page': page,
-            'size': size
-        }
-        _query_builder = APIHelper.append_url_with_query_parameters(_query_builder,
-            _query_parameters, Configuration.array_serialization)
-        _query_url = APIHelper.clean_url(_query_builder)
-
-        # Prepare headers
-        _headers = {
-            'accept': 'application/json'
-        }
-
-        # Prepare and execute request
-        _request = self.http_client.get(_query_url, headers=_headers)
-        BasicAuth.apply(_request)
-        _context = self.execute_request(_request)
-        self.validate_response(_context)
-
-        # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, ListDiscountsResponse.from_dictionary)
-
-    def update_subscription_billing_date(self,
-                                         subscription_id,
-                                         request,
-                                         idempotency_key=None):
-        """Does a PATCH request to /subscriptions/{subscription_id}/billing-date.
-
-        Updates the billing date from a subscription
-
-        Args:
-            subscription_id (string): The subscription id
-            request (UpdateSubscriptionBillingDateRequest): Request for
-                updating the subscription billing date
+            subscription_id (string): TODO: type description here. Example: 
             idempotency_key (string, optional): TODO: type description here.
                 Example: 
 
         Returns:
-            GetSubscriptionResponse: Response from the API. 
+            GetPeriodResponse: Response from the API. 
 
         Raises:
             APIException: When an error occurs while fetching the data from
@@ -1162,7 +2205,7 @@ class SubscriptionsController(BaseController):
         """
 
         # Prepare query URL
-        _url_path = '/subscriptions/{subscription_id}/billing-date'
+        _url_path = '/subscriptions/{subscription_id}/cycles'
         _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
             'subscription_id': subscription_id
         })
@@ -1173,18 +2216,32 @@ class SubscriptionsController(BaseController):
         # Prepare headers
         _headers = {
             'accept': 'application/json',
-            'content-type': 'application/json; charset=utf-8',
+            'ServiceRefererName': Configuration.service_referer_name,
             'idempotency-key': idempotency_key
         }
 
         # Prepare and execute request
-        _request = self.http_client.patch(_query_url, headers=_headers, parameters=APIHelper.json_serialize(request))
+        _request = self.http_client.post(_query_url, headers=_headers)
         BasicAuth.apply(_request)
         _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
         self.validate_response(_context)
 
         # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, GetSubscriptionResponse.from_dictionary)
+        return APIHelper.json_deserialize(_context.response.raw_body, GetPeriodResponse.from_dictionary)
 
     def delete_subscription_item(self,
                                  subscription_id,
@@ -1224,6 +2281,7 @@ class SubscriptionsController(BaseController):
         # Prepare headers
         _headers = {
             'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name,
             'idempotency-key': idempotency_key
         }
 
@@ -1231,586 +2289,31 @@ class SubscriptionsController(BaseController):
         _request = self.http_client.delete(_query_url, headers=_headers)
         BasicAuth.apply(_request)
         _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
         self.validate_response(_context)
 
         # Return appropriate type
         return APIHelper.json_deserialize(_context.response.raw_body, GetSubscriptionItemResponse.from_dictionary)
-
-    def get_increments(self,
-                       subscription_id,
-                       page=None,
-                       size=None):
-        """Does a GET request to /subscriptions/{subscription_id}/increments/.
-
-        TODO: type endpoint description here.
-
-        Args:
-            subscription_id (string): The subscription id
-            page (int, optional): Page number
-            size (int, optional): Page size
-
-        Returns:
-            ListIncrementsResponse: Response from the API. 
-
-        Raises:
-            APIException: When an error occurs while fetching the data from
-                the remote API. This exception includes the HTTP Response
-                code, an error message, and the HTTP body that was received in
-                the request.
-
-        """
-
-        # Prepare query URL
-        _url_path = '/subscriptions/{subscription_id}/increments/'
-        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
-            'subscription_id': subscription_id
-        })
-        _query_builder = Configuration.base_uri
-        _query_builder += _url_path
-        _query_parameters = {
-            'page': page,
-            'size': size
-        }
-        _query_builder = APIHelper.append_url_with_query_parameters(_query_builder,
-            _query_parameters, Configuration.array_serialization)
-        _query_url = APIHelper.clean_url(_query_builder)
-
-        # Prepare headers
-        _headers = {
-            'accept': 'application/json'
-        }
-
-        # Prepare and execute request
-        _request = self.http_client.get(_query_url, headers=_headers)
-        BasicAuth.apply(_request)
-        _context = self.execute_request(_request)
-        self.validate_response(_context)
-
-        # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, ListIncrementsResponse.from_dictionary)
-
-    def update_subscription_due_days(self,
-                                     subscription_id,
-                                     request,
-                                     idempotency_key=None):
-        """Does a PATCH request to /subscriptions/{subscription_id}/boleto-due-days.
-
-        Updates the boleto due days from a subscription
-
-        Args:
-            subscription_id (string): Subscription Id
-            request (UpdateSubscriptionDueDaysRequest): TODO: type description
-                here. Example: 
-            idempotency_key (string, optional): TODO: type description here.
-                Example: 
-
-        Returns:
-            GetSubscriptionResponse: Response from the API. 
-
-        Raises:
-            APIException: When an error occurs while fetching the data from
-                the remote API. This exception includes the HTTP Response
-                code, an error message, and the HTTP body that was received in
-                the request.
-
-        """
-
-        # Prepare query URL
-        _url_path = '/subscriptions/{subscription_id}/boleto-due-days'
-        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
-            'subscription_id': subscription_id
-        })
-        _query_builder = Configuration.base_uri
-        _query_builder += _url_path
-        _query_url = APIHelper.clean_url(_query_builder)
-
-        # Prepare headers
-        _headers = {
-            'accept': 'application/json',
-            'content-type': 'application/json; charset=utf-8',
-            'idempotency-key': idempotency_key
-        }
-
-        # Prepare and execute request
-        _request = self.http_client.patch(_query_url, headers=_headers, parameters=APIHelper.json_serialize(request))
-        BasicAuth.apply(_request)
-        _context = self.execute_request(_request)
-        self.validate_response(_context)
-
-        # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, GetSubscriptionResponse.from_dictionary)
-
-    def update_subscription_start_at(self,
-                                     subscription_id,
-                                     request,
-                                     idempotency_key=None):
-        """Does a PATCH request to /subscriptions/{subscription_id}/start-at.
-
-        Updates the start at date from a subscription
-
-        Args:
-            subscription_id (string): The subscription id
-            request (UpdateSubscriptionStartAtRequest): Request for updating
-                the subscription start date
-            idempotency_key (string, optional): TODO: type description here.
-                Example: 
-
-        Returns:
-            GetSubscriptionResponse: Response from the API. 
-
-        Raises:
-            APIException: When an error occurs while fetching the data from
-                the remote API. This exception includes the HTTP Response
-                code, an error message, and the HTTP body that was received in
-                the request.
-
-        """
-
-        # Prepare query URL
-        _url_path = '/subscriptions/{subscription_id}/start-at'
-        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
-            'subscription_id': subscription_id
-        })
-        _query_builder = Configuration.base_uri
-        _query_builder += _url_path
-        _query_url = APIHelper.clean_url(_query_builder)
-
-        # Prepare headers
-        _headers = {
-            'accept': 'application/json',
-            'content-type': 'application/json; charset=utf-8',
-            'idempotency-key': idempotency_key
-        }
-
-        # Prepare and execute request
-        _request = self.http_client.patch(_query_url, headers=_headers, parameters=APIHelper.json_serialize(request))
-        BasicAuth.apply(_request)
-        _context = self.execute_request(_request)
-        self.validate_response(_context)
-
-        # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, GetSubscriptionResponse.from_dictionary)
-
-    def update_subscription_item(self,
-                                 subscription_id,
-                                 item_id,
-                                 body,
-                                 idempotency_key=None):
-        """Does a PUT request to /subscriptions/{subscription_id}/items/{item_id}.
-
-        Updates a subscription item
-
-        Args:
-            subscription_id (string): Subscription Id
-            item_id (string): Item id
-            body (UpdateSubscriptionItemRequest): Request for updating a
-                subscription item
-            idempotency_key (string, optional): TODO: type description here.
-                Example: 
-
-        Returns:
-            GetSubscriptionItemResponse: Response from the API. 
-
-        Raises:
-            APIException: When an error occurs while fetching the data from
-                the remote API. This exception includes the HTTP Response
-                code, an error message, and the HTTP body that was received in
-                the request.
-
-        """
-
-        # Prepare query URL
-        _url_path = '/subscriptions/{subscription_id}/items/{item_id}'
-        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
-            'subscription_id': subscription_id,
-            'item_id': item_id
-        })
-        _query_builder = Configuration.base_uri
-        _query_builder += _url_path
-        _query_url = APIHelper.clean_url(_query_builder)
-
-        # Prepare headers
-        _headers = {
-            'accept': 'application/json',
-            'content-type': 'application/json; charset=utf-8',
-            'idempotency-key': idempotency_key
-        }
-
-        # Prepare and execute request
-        _request = self.http_client.put(_query_url, headers=_headers, parameters=APIHelper.json_serialize(body))
-        BasicAuth.apply(_request)
-        _context = self.execute_request(_request)
-        self.validate_response(_context)
-
-        # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, GetSubscriptionItemResponse.from_dictionary)
-
-    def create_subscription_item(self,
-                                 subscription_id,
-                                 request,
-                                 idempotency_key=None):
-        """Does a POST request to /subscriptions/{subscription_id}/items.
-
-        Creates a new Subscription item
-
-        Args:
-            subscription_id (string): Subscription id
-            request (CreateSubscriptionItemRequest): Request for creating a
-                subscription item
-            idempotency_key (string, optional): TODO: type description here.
-                Example: 
-
-        Returns:
-            GetSubscriptionItemResponse: Response from the API. 
-
-        Raises:
-            APIException: When an error occurs while fetching the data from
-                the remote API. This exception includes the HTTP Response
-                code, an error message, and the HTTP body that was received in
-                the request.
-
-        """
-
-        # Prepare query URL
-        _url_path = '/subscriptions/{subscription_id}/items'
-        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
-            'subscription_id': subscription_id
-        })
-        _query_builder = Configuration.base_uri
-        _query_builder += _url_path
-        _query_url = APIHelper.clean_url(_query_builder)
-
-        # Prepare headers
-        _headers = {
-            'accept': 'application/json',
-            'content-type': 'application/json; charset=utf-8',
-            'idempotency-key': idempotency_key
-        }
-
-        # Prepare and execute request
-        _request = self.http_client.post(_query_url, headers=_headers, parameters=APIHelper.json_serialize(request))
-        BasicAuth.apply(_request)
-        _context = self.execute_request(_request)
-        self.validate_response(_context)
-
-        # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, GetSubscriptionItemResponse.from_dictionary)
-
-    def get_subscription(self,
-                         subscription_id):
-        """Does a GET request to /subscriptions/{subscription_id}.
-
-        Gets a subscription
-
-        Args:
-            subscription_id (string): Subscription id
-
-        Returns:
-            GetSubscriptionResponse: Response from the API. 
-
-        Raises:
-            APIException: When an error occurs while fetching the data from
-                the remote API. This exception includes the HTTP Response
-                code, an error message, and the HTTP body that was received in
-                the request.
-
-        """
-
-        # Prepare query URL
-        _url_path = '/subscriptions/{subscription_id}'
-        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
-            'subscription_id': subscription_id
-        })
-        _query_builder = Configuration.base_uri
-        _query_builder += _url_path
-        _query_url = APIHelper.clean_url(_query_builder)
-
-        # Prepare headers
-        _headers = {
-            'accept': 'application/json'
-        }
-
-        # Prepare and execute request
-        _request = self.http_client.get(_query_url, headers=_headers)
-        BasicAuth.apply(_request)
-        _context = self.execute_request(_request)
-        self.validate_response(_context)
-
-        # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, GetSubscriptionResponse.from_dictionary)
-
-    def get_usages(self,
-                   subscription_id,
-                   item_id,
-                   page=None,
-                   size=None,
-                   code=None,
-                   group=None,
-                   used_since=None,
-                   used_until=None):
-        """Does a GET request to /subscriptions/{subscription_id}/items/{item_id}/usages.
-
-        Lists all usages from a subscription item
-
-        Args:
-            subscription_id (string): The subscription id
-            item_id (string): The subscription item id
-            page (int, optional): Page number
-            size (int, optional): Page size
-            code (string, optional): Identification code in the client system
-            group (string, optional): Identification group in the client
-                system
-            used_since (datetime, optional): TODO: type description here.
-                Example: 
-            used_until (datetime, optional): TODO: type description here.
-                Example: 
-
-        Returns:
-            ListUsagesResponse: Response from the API. 
-
-        Raises:
-            APIException: When an error occurs while fetching the data from
-                the remote API. This exception includes the HTTP Response
-                code, an error message, and the HTTP body that was received in
-                the request.
-
-        """
-
-        # Prepare query URL
-        _url_path = '/subscriptions/{subscription_id}/items/{item_id}/usages'
-        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
-            'subscription_id': subscription_id,
-            'item_id': item_id
-        })
-        _query_builder = Configuration.base_uri
-        _query_builder += _url_path
-        _query_parameters = {
-            'page': page,
-            'size': size,
-            'code': code,
-            'group': group,
-            'used_since': APIHelper.when_defined(APIHelper.RFC3339DateTime, used_since),
-            'used_until': APIHelper.when_defined(APIHelper.RFC3339DateTime, used_until)
-        }
-        _query_builder = APIHelper.append_url_with_query_parameters(_query_builder,
-            _query_parameters, Configuration.array_serialization)
-        _query_url = APIHelper.clean_url(_query_builder)
-
-        # Prepare headers
-        _headers = {
-            'accept': 'application/json'
-        }
-
-        # Prepare and execute request
-        _request = self.http_client.get(_query_url, headers=_headers)
-        BasicAuth.apply(_request)
-        _context = self.execute_request(_request)
-        self.validate_response(_context)
-
-        # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, ListUsagesResponse.from_dictionary)
-
-    def update_latest_period_end_at(self,
-                                    subscription_id,
-                                    request,
-                                    idempotency_key=None):
-        """Does a PATCH request to /subscriptions/{subscription_id}/periods/latest/end-at.
-
-        TODO: type endpoint description here.
-
-        Args:
-            subscription_id (string): TODO: type description here. Example: 
-            request (UpdateCurrentCycleEndDateRequest): Request for updating
-                the end date of the current signature cycle
-            idempotency_key (string, optional): TODO: type description here.
-                Example: 
-
-        Returns:
-            GetSubscriptionResponse: Response from the API. 
-
-        Raises:
-            APIException: When an error occurs while fetching the data from
-                the remote API. This exception includes the HTTP Response
-                code, an error message, and the HTTP body that was received in
-                the request.
-
-        """
-
-        # Prepare query URL
-        _url_path = '/subscriptions/{subscription_id}/periods/latest/end-at'
-        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
-            'subscription_id': subscription_id
-        })
-        _query_builder = Configuration.base_uri
-        _query_builder += _url_path
-        _query_url = APIHelper.clean_url(_query_builder)
-
-        # Prepare headers
-        _headers = {
-            'accept': 'application/json',
-            'content-type': 'application/json; charset=utf-8',
-            'idempotency-key': idempotency_key
-        }
-
-        # Prepare and execute request
-        _request = self.http_client.patch(_query_url, headers=_headers, parameters=APIHelper.json_serialize(request))
-        BasicAuth.apply(_request)
-        _context = self.execute_request(_request)
-        self.validate_response(_context)
-
-        # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, GetSubscriptionResponse.from_dictionary)
-
-    def update_subscription_minium_price(self,
-                                         subscription_id,
-                                         request,
-                                         idempotency_key=None):
-        """Does a PATCH request to /subscriptions/{subscription_id}/minimum_price.
-
-        Atualização do valor mínimo da assinatura
-
-        Args:
-            subscription_id (string): Subscription Id
-            request (UpdateSubscriptionMinimumPriceRequest): Request da
-                requisição com o valor mínimo que será configurado
-            idempotency_key (string, optional): TODO: type description here.
-                Example: 
-
-        Returns:
-            GetSubscriptionResponse: Response from the API. 
-
-        Raises:
-            APIException: When an error occurs while fetching the data from
-                the remote API. This exception includes the HTTP Response
-                code, an error message, and the HTTP body that was received in
-                the request.
-
-        """
-
-        # Prepare query URL
-        _url_path = '/subscriptions/{subscription_id}/minimum_price'
-        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
-            'subscription_id': subscription_id
-        })
-        _query_builder = Configuration.base_uri
-        _query_builder += _url_path
-        _query_url = APIHelper.clean_url(_query_builder)
-
-        # Prepare headers
-        _headers = {
-            'accept': 'application/json',
-            'content-type': 'application/json; charset=utf-8',
-            'idempotency-key': idempotency_key
-        }
-
-        # Prepare and execute request
-        _request = self.http_client.patch(_query_url, headers=_headers, parameters=APIHelper.json_serialize(request))
-        BasicAuth.apply(_request)
-        _context = self.execute_request(_request)
-        self.validate_response(_context)
-
-        # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, GetSubscriptionResponse.from_dictionary)
-
-    def get_subscription_cycle_by_id(self,
-                                     subscription_id,
-                                     cycle_id):
-        """Does a GET request to /subscriptions/{subscription_id}/cycles/{cycleId}.
-
-        TODO: type endpoint description here.
-
-        Args:
-            subscription_id (string): The subscription id
-            cycle_id (string): TODO: type description here. Example: 
-
-        Returns:
-            GetPeriodResponse: Response from the API. 
-
-        Raises:
-            APIException: When an error occurs while fetching the data from
-                the remote API. This exception includes the HTTP Response
-                code, an error message, and the HTTP body that was received in
-                the request.
-
-        """
-
-        # Prepare query URL
-        _url_path = '/subscriptions/{subscription_id}/cycles/{cycleId}'
-        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
-            'subscription_id': subscription_id,
-            'cycleId': cycle_id
-        })
-        _query_builder = Configuration.base_uri
-        _query_builder += _url_path
-        _query_url = APIHelper.clean_url(_query_builder)
-
-        # Prepare headers
-        _headers = {
-            'accept': 'application/json'
-        }
-
-        # Prepare and execute request
-        _request = self.http_client.get(_query_url, headers=_headers)
-        BasicAuth.apply(_request)
-        _context = self.execute_request(_request)
-        self.validate_response(_context)
-
-        # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, GetPeriodResponse.from_dictionary)
-
-    def renew_subscription(self,
-                           subscription_id,
-                           idempotency_key=None):
-        """Does a POST request to /subscriptions/{subscription_id}/cycles.
-
-        TODO: type endpoint description here.
-
-        Args:
-            subscription_id (string): TODO: type description here. Example: 
-            idempotency_key (string, optional): TODO: type description here.
-                Example: 
-
-        Returns:
-            GetPeriodResponse: Response from the API. 
-
-        Raises:
-            APIException: When an error occurs while fetching the data from
-                the remote API. This exception includes the HTTP Response
-                code, an error message, and the HTTP body that was received in
-                the request.
-
-        """
-
-        # Prepare query URL
-        _url_path = '/subscriptions/{subscription_id}/cycles'
-        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
-            'subscription_id': subscription_id
-        })
-        _query_builder = Configuration.base_uri
-        _query_builder += _url_path
-        _query_url = APIHelper.clean_url(_query_builder)
-
-        # Prepare headers
-        _headers = {
-            'accept': 'application/json',
-            'idempotency-key': idempotency_key
-        }
-
-        # Prepare and execute request
-        _request = self.http_client.post(_query_url, headers=_headers)
-        BasicAuth.apply(_request)
-        _context = self.execute_request(_request)
-        self.validate_response(_context)
-
-        # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, GetPeriodResponse.from_dictionary)
 
     def get_usage_report(self,
                          subscription_id,
                          period_id):
         """Does a GET request to /subscriptions/{subscription_id}/periods/{period_id}/usages/report.
 
-        TODO: type endpoint description here.
+        GetUsageReport
 
         Args:
             subscription_id (string): The subscription Id
@@ -1839,61 +2342,29 @@ class SubscriptionsController(BaseController):
 
         # Prepare headers
         _headers = {
-            'accept': 'application/json'
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name
         }
 
         # Prepare and execute request
         _request = self.http_client.get(_query_url, headers=_headers)
         BasicAuth.apply(_request)
         _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
         self.validate_response(_context)
 
         # Return appropriate type
         return APIHelper.json_deserialize(_context.response.raw_body, GetUsageReportResponse.from_dictionary)
-
-    def update_split_subscription(self,
-                                  id,
-                                  request):
-        """Does a PATCH request to /subscriptions/{id}/split.
-
-        TODO: type endpoint description here.
-
-        Args:
-            id (string): Subscription's id
-            request (UpdateSubscriptionSplitRequest): TODO: type description
-                here. Example: 
-
-        Returns:
-            GetSubscriptionResponse: Response from the API. 
-
-        Raises:
-            APIException: When an error occurs while fetching the data from
-                the remote API. This exception includes the HTTP Response
-                code, an error message, and the HTTP body that was received in
-                the request.
-
-        """
-
-        # Prepare query URL
-        _url_path = '/subscriptions/{id}/split'
-        _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
-            'id': id
-        })
-        _query_builder = Configuration.base_uri
-        _query_builder += _url_path
-        _query_url = APIHelper.clean_url(_query_builder)
-
-        # Prepare headers
-        _headers = {
-            'accept': 'application/json',
-            'content-type': 'application/json; charset=utf-8'
-        }
-
-        # Prepare and execute request
-        _request = self.http_client.patch(_query_url, headers=_headers, parameters=APIHelper.json_serialize(request))
-        BasicAuth.apply(_request)
-        _context = self.execute_request(_request)
-        self.validate_response(_context)
-
-        # Return appropriate type
-        return APIHelper.json_deserialize(_context.response.raw_body, GetSubscriptionResponse.from_dictionary)

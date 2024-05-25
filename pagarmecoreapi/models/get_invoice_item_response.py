@@ -18,9 +18,10 @@ class GetInvoiceItemResponse(object):
     Attributes:
         amount (int): TODO: type description here.
         description (string): TODO: type description here.
-        pricing_scheme (GetPricingSchemeResponse): TODO: type description
-            here.
-        price_bracket (GetPriceBracketResponse): TODO: type description here.
+        pricing_scheme (GetPricingSchemeResponse): Response object for getting
+            a pricing scheme
+        price_bracket (GetPriceBracketResponse): Response object for getting a
+            price bracket
         quantity (int): TODO: type description here.
         name (string): TODO: type description here.
         subscription_item_id (string): Subscription Item Id

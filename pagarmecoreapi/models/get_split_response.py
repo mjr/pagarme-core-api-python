@@ -18,7 +18,7 @@ class GetSplitResponse(object):
     Attributes:
         mtype (string): Type
         amount (int): Amount
-        recipient (GetRecipientResponse): Recipient
+        recipient (GetRecipientResponse): Recipient response
         gateway_id (string): The split rule gateway id
         options (GetSplitOptionsResponse): TODO: type description here.
         id (string): TODO: type description here.

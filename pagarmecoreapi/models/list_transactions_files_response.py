@@ -18,7 +18,8 @@ class ListTransactionsFilesResponse(object):
     Attributes:
         data (list of GetTransactionReportFileResponse): TODO: type
             description here.
-        paging (PagingResponse): Paging object
+        paging (PagingResponse): Object used for returning lists of objects
+            with pagination
 
     """
 

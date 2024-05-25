@@ -20,7 +20,7 @@ class GetTokenResponse(object):
         mtype (string): TODO: type description here.
         created_at (datetime): TODO: type description here.
         expires_at (string): TODO: type description here.
-        card (GetCardTokenResponse): TODO: type description here.
+        card (GetCardTokenResponse): Card token data
 
     """
 

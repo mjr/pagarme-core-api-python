@@ -20,7 +20,8 @@ class GetAccessTokenResponse(object):
         code (string): TODO: type description here.
         status (string): TODO: type description here.
         created_at (datetime): TODO: type description here.
-        customer (GetCustomerResponse): TODO: type description here.
+        customer (GetCustomerResponse): Response object for getting a
+            customer
 
     """
 

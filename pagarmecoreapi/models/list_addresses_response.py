@@ -17,7 +17,8 @@ class ListAddressesResponse(object):
 
     Attributes:
         data (list of GetAddressResponse): The address objects
-        paging (PagingResponse): Paging object
+        paging (PagingResponse): Object used for returning lists of objects
+            with pagination
 
     """
 

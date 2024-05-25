@@ -21,7 +21,7 @@ class CreateChargeRequest(object):
         code (string): Code
         amount (int): The amount of the charge, in cents
         customer_id (string): The customer's id
-        customer (CreateCustomerRequest): Customer data
+        customer (CreateCustomerRequest): Request for creating a new customer
         payment (CreatePaymentRequest): Payment data
         metadata (dict<object, string>): Metadata
         due_at (datetime): The charge due date

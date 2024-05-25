@@ -27,6 +27,8 @@ class CreatePrivateLabelPaymentRequest(object):
         extended_limit_enabled (bool): Indicates whether the extended label
             (private label) is enabled
         extended_limit_code (string): Extended Limit Code
+        recurrency_cycle (string): Defines whether the card has been used one
+            or more times.
 
     """
 
@@ -40,7 +42,8 @@ class CreatePrivateLabelPaymentRequest(object):
         "recurrence":'recurrence',
         "capture":'capture',
         "extended_limit_enabled":'extended_limit_enabled',
-        "extended_limit_code":'extended_limit_code'
+        "extended_limit_code":'extended_limit_code',
+        "recurrency_cycle":'recurrency_cycle'
     }
 
     def __init__(self,
@@ -52,7 +55,8 @@ class CreatePrivateLabelPaymentRequest(object):
                  recurrence=None,
                  capture=True,
                  extended_limit_enabled=None,
-                 extended_limit_code=None):
+                 extended_limit_code=None,
+                 recurrency_cycle=None):
         """Constructor for the CreatePrivateLabelPaymentRequest class"""
 
         # Initialize members of the class
@@ -65,6 +69,7 @@ class CreatePrivateLabelPaymentRequest(object):
         self.capture = capture
         self.extended_limit_enabled = extended_limit_enabled
         self.extended_limit_code = extended_limit_code
+        self.recurrency_cycle = recurrency_cycle
 
 
     @classmethod
@@ -94,6 +99,7 @@ class CreatePrivateLabelPaymentRequest(object):
         capture = dictionary.get("capture") if dictionary.get("capture") else True
         extended_limit_enabled = dictionary.get('extended_limit_enabled')
         extended_limit_code = dictionary.get('extended_limit_code')
+        recurrency_cycle = dictionary.get('recurrency_cycle')
 
         # Return an object of this model
         return cls(installments,
@@ -104,6 +110,7 @@ class CreatePrivateLabelPaymentRequest(object):
                    recurrence,
                    capture,
                    extended_limit_enabled,
-                   extended_limit_code)
+                   extended_limit_code,
+                   recurrency_cycle)
 
 

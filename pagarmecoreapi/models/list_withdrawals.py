@@ -17,7 +17,8 @@ class ListWithdrawals(object):
 
     Attributes:
         data (list of GetWithdrawResponse): The Increments response
-        paging (PagingResponse): Paging object
+        paging (PagingResponse): Object used for returning lists of objects
+            with pagination
 
     """
 

@@ -16,8 +16,8 @@ class CreateCheckoutDebitCardPaymentRequest(object):
 
     Attributes:
         statement_descriptor (string): Card invoice text descriptor
-        authentication (CreatePaymentAuthenticationRequest): Creates payment
-            authentication
+        authentication (CreatePaymentAuthenticationRequest): The payment
+            authentication request
 
     """
 

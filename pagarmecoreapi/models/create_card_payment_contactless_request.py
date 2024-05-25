@@ -18,9 +18,10 @@ class CreateCardPaymentContactlessRequest(object):
 
     Attributes:
         mtype (string): The authentication type
-        apple_pay (CreateApplePayRequest): The ApplePay encrypted request
-        google_pay (CreateGooglePayRequest): The GooglePay encrypted request
-        emv (CreateEmvDecryptRequest): The Emv encrypted request
+        apple_pay (CreateApplePayRequest): The ApplePay Token Payment Request
+        google_pay (CreateGooglePayRequest): The GooglePay Token Payment
+            Request
+        emv (CreateEmvDecryptRequest): TODO: type description here.
 
     """
 

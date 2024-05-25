@@ -17,7 +17,8 @@ class ListSubscriptionItemsResponse(object):
 
     Attributes:
         data (list of GetSubscriptionItemResponse): The subscription items
-        paging (PagingResponse): Paging object
+        paging (PagingResponse): Object used for returning lists of objects
+            with pagination
 
     """
 

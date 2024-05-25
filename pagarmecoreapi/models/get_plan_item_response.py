@@ -22,10 +22,10 @@ class GetPlanItemResponse(object):
         status (string): TODO: type description here.
         created_at (datetime): TODO: type description here.
         updated_at (datetime): TODO: type description here.
-        pricing_scheme (GetPricingSchemeResponse): TODO: type description
-            here.
+        pricing_scheme (GetPricingSchemeResponse): Response object for getting
+            a pricing scheme
         description (string): TODO: type description here.
-        plan (GetPlanResponse): TODO: type description here.
+        plan (GetPlanResponse): Response object for getting a plan
         quantity (int): TODO: type description here.
         cycles (int): TODO: type description here.
         deleted_at (datetime): TODO: type description here.

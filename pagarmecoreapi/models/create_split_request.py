@@ -18,7 +18,7 @@ class CreateSplitRequest(object):
         mtype (string): Split type
         amount (int): Amount
         recipient_id (string): Recipient id
-        options (CreateSplitOptionsRequest): The split options request
+        options (CreateSplitOptionsRequest): The Split Options Request
         split_rule_id (string): Rule code used in cancellation.
 
     """

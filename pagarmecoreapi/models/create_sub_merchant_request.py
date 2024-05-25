@@ -24,8 +24,8 @@ class CreateSubMerchantRequest(object):
             characters.
         mtype (string): Document type. Can be either 'individual' or
             'company'
-        phone (CreatePhoneRequest): Phone
-        address (CreateAddressRequest): Address
+        phone (CreatePhoneRequest): TODO: type description here.
+        address (CreateAddressRequest): Request for creating a new Address
 
     """
 

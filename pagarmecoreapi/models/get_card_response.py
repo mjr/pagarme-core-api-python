@@ -26,9 +26,10 @@ class GetCardResponse(object):
         status (string): TODO: type description here.
         created_at (datetime): TODO: type description here.
         updated_at (datetime): TODO: type description here.
-        billing_address (GetBillingAddressResponse): TODO: type description
-            here.
-        customer (GetCustomerResponse): TODO: type description here.
+        billing_address (GetBillingAddressResponse): Response object for
+            getting a billing address
+        customer (GetCustomerResponse): Response object for getting a
+            customer
         metadata (dict<object, string>): TODO: type description here.
         mtype (string): Card type
         holder_document (string): Document number for the card's holder

@@ -17,7 +17,8 @@ class ListRecipientResponse(object):
 
     Attributes:
         data (list of GetRecipientResponse): Recipients
-        paging (PagingResponse): Paging
+        paging (PagingResponse): Object used for returning lists of objects
+            with pagination
 
     """
 

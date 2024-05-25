@@ -17,7 +17,8 @@ class ListPlansResponse(object):
 
     Attributes:
         data (list of GetPlanResponse): The plan objects
-        paging (PagingResponse): Paging object
+        paging (PagingResponse): Object used for returning lists of objects
+            with pagination
 
     """
 

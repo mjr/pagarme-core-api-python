@@ -18,7 +18,8 @@ class UpdatePlanItemRequest(object):
         name (string): Item name
         description (string): Description
         status (string): Item status
-        pricing_scheme (UpdatePricingSchemeRequest): Pricing scheme
+        pricing_scheme (UpdatePricingSchemeRequest): Request for updating a
+            pricing scheme
         quantity (int): Quantity
         cycles (int): Number of cycles that the item will be charged
 

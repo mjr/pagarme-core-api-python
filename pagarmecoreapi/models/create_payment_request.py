@@ -26,27 +26,29 @@ class CreatePaymentRequest(object):
 
     Attributes:
         payment_method (string): Payment method
-        credit_card (CreateCreditCardPaymentRequest): Settings for credit card
-            payment
-        debit_card (CreateDebitCardPaymentRequest): Settings for debit card
-            payment
-        boleto (CreateBoletoPaymentRequest): Settings for boleto payment
+        credit_card (CreateCreditCardPaymentRequest): The settings for
+            creating a credit card payment
+        debit_card (CreateDebitCardPaymentRequest): The settings for creating
+            a debit card payment
+        boleto (CreateBoletoPaymentRequest): Contains the settings for
+            creating a boleto payment
         currency (string): Currency. Must be informed using 3 characters
-        voucher (CreateVoucherPaymentRequest): Settings for voucher payment
+        voucher (CreateVoucherPaymentRequest): The settings for creating a
+            voucher payment
         split (list of CreateSplitRequest): Splits
-        bank_transfer (CreateBankTransferPaymentRequest): Settings for bank
-            transfer payment
+        bank_transfer (CreateBankTransferPaymentRequest): Request for creating
+            a bank transfer payment
         gateway_affiliation_id (string): Gateway affiliation code
         amount (int): The amount of the payment, in cents
-        checkout (CreateCheckoutPaymentRequest): Settings for checkout
-            payment
+        checkout (CreateCheckoutPaymentRequest): Checkout payment request
         customer_id (string): Customer Id
-        customer (CreateCustomerRequest): Customer
+        customer (CreateCustomerRequest): Request for creating a new customer
         metadata (dict<object, string>): Metadata
-        cash (CreateCashPaymentRequest): Settings for cash payment
-        private_label (CreatePrivateLabelPaymentRequest): Settings for private
-            label payment
-        pix (CreatePixPaymentRequest): Settings for pix payment
+        cash (CreateCashPaymentRequest): TODO: type description here.
+        private_label (CreatePrivateLabelPaymentRequest): The settings for
+            creating a private label payment
+        pix (CreatePixPaymentRequest): Contains information to create a pix
+            payment
 
     """
 

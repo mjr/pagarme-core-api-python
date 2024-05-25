@@ -17,7 +17,7 @@ class GetCheckoutDebitCardPaymentResponse(object):
     Attributes:
         statement_descriptor (string): Descrição na fatura
         authentication (GetPaymentAuthenticationResponse): Payment
-            Authentication response object data
+            Authentication response
 
     """
 

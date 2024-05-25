@@ -26,8 +26,8 @@ class GetIncrementResponse(object):
         deleted_at (datetime): TODO: type description here.
         description (string): TODO: type description here.
         subscription (GetSubscriptionResponse): TODO: type description here.
-        subscription_item (GetSubscriptionItemResponse): The Subscription
-            Item
+        subscription_item (GetSubscriptionItemResponse): TODO: type
+            description here.
 
     """
 

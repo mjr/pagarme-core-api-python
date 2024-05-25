@@ -15,7 +15,8 @@ class UpdateRecipientBankAccountRequest(object):
     Updates the default bank account for a recipient
 
     Attributes:
-        bank_account (CreateBankAccountRequest): Bank account
+        bank_account (CreateBankAccountRequest): Request for creating a bank
+            account
         payment_mode (string): Payment mode
 
     """
@@ -28,7 +29,7 @@ class UpdateRecipientBankAccountRequest(object):
 
     def __init__(self,
                  bank_account=None,
-                 payment_mode='bank_transfer'):
+                 payment_mode=None):
         """Constructor for the UpdateRecipientBankAccountRequest class"""
 
         # Initialize members of the class
@@ -55,7 +56,7 @@ class UpdateRecipientBankAccountRequest(object):
 
         # Extract variables from the dictionary
         bank_account = pagarmecoreapi.models.create_bank_account_request.CreateBankAccountRequest.from_dictionary(dictionary.get('bank_account')) if dictionary.get('bank_account') else None
-        payment_mode = dictionary.get("payment_mode") if dictionary.get("payment_mode") else 'bank_transfer'
+        payment_mode = dictionary.get('payment_mode')
 
         # Return an object of this model
         return cls(bank_account,

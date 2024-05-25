@@ -17,7 +17,8 @@ class CreateEmvDataDecryptRequest(object):
 
     Attributes:
         cipher (string): Emv Decrypt cipher type
-        dukpt (CreateEmvDataDukptDecryptRequest): Dukpt data request
+        dukpt (CreateEmvDataDukptDecryptRequest): TODO: type description
+            here.
         tags (list of CreateEmvDataTlvDecryptRequest): Encrypted tags list
 
     """

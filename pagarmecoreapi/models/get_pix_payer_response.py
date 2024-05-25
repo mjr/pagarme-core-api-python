@@ -18,24 +18,23 @@ class GetPixPayerResponse(object):
         name (string): TODO: type description here.
         document (string): TODO: type description here.
         document_type (string): TODO: type description here.
-        bank_account (GetPixBankAccountResponse): TODO: type description
-            here.
+        bank_account (GetPixBankAccountResponse): Payer's bank details.
 
     """
 
     # Create a mapping from Model property names to API property names
     _names = {
+        "bank_account":'bank_account',
         "name":'name',
         "document":'document',
-        "document_type":'document_type',
-        "bank_account":'bank_account'
+        "document_type":'document_type'
     }
 
     def __init__(self,
+                 bank_account=None,
                  name=None,
                  document=None,
-                 document_type=None,
-                 bank_account=None):
+                 document_type=None):
         """Constructor for the GetPixPayerResponse class"""
 
         # Initialize members of the class
@@ -63,15 +62,15 @@ class GetPixPayerResponse(object):
             return None
 
         # Extract variables from the dictionary
+        bank_account = pagarmecoreapi.models.get_pix_bank_account_response.GetPixBankAccountResponse.from_dictionary(dictionary.get('bank_account')) if dictionary.get('bank_account') else None
         name = dictionary.get('name')
         document = dictionary.get('document')
         document_type = dictionary.get('document_type')
-        bank_account = pagarmecoreapi.models.get_pix_bank_account_response.GetPixBankAccountResponse.from_dictionary(dictionary.get('bank_account')) if dictionary.get('bank_account') else None
 
         # Return an object of this model
-        return cls(name,
+        return cls(bank_account,
+                   name,
                    document,
-                   document_type,
-                   bank_account)
+                   document_type)
 
 

@@ -19,8 +19,8 @@ class CreateCheckoutCreditCardPaymentRequest(object):
         statement_descriptor (string): Card invoice text descriptor
         installments (list of CreateCheckoutCardInstallmentOptionRequest):
             Payment installment options
-        authentication (CreatePaymentAuthenticationRequest): Creates payment
-            authentication
+        authentication (CreatePaymentAuthenticationRequest): The payment
+            authentication request
         capture (bool): Authorize and capture?
 
     """

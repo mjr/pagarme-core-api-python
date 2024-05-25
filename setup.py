@@ -12,7 +12,7 @@ else:
 
 setup(
     name='pagarmecoreapi',
-    version='5.6.1',
+    version='5.7.6',
     description='Pagarme API',
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -25,5 +25,9 @@ setup(
         'jsonpickle>=2.2.0, <3.0',
         'cachecontrol>=0.11.7, <1.0',
         'python-dateutil>=2.5.3, <3.0'
-    ]
+    ],
+    tests_require=[
+        'nose>=1.3.7'
+    ],
+    test_suite = 'nose.collector'
 )

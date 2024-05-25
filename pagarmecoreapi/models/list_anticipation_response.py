@@ -17,7 +17,8 @@ class ListAnticipationResponse(object):
 
     Attributes:
         data (list of GetAnticipationResponse): Anticipations
-        paging (PagingResponse): Paging
+        paging (PagingResponse): Object used for returning lists of objects
+            with pagination
 
     """
 

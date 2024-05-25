@@ -17,7 +17,8 @@ class ListChargesResponse(object):
 
     Attributes:
         data (list of GetChargeResponse): The charge objects
-        paging (PagingResponse): Paging object
+        paging (PagingResponse): Object used for returning lists of objects
+            with pagination
 
     """
 

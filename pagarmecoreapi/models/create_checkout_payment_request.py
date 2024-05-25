@@ -26,20 +26,22 @@ class CreateCheckoutPaymentRequest(object):
         success_url (string): Success url
         default_payment_method (string): Default payment method
         gateway_affiliation_id (string): Gateway Affiliation Id
-        credit_card (CreateCheckoutCreditCardPaymentRequest): Credit Card
+        credit_card (CreateCheckoutCreditCardPaymentRequest): Checkout card
             payment request
-        debit_card (CreateCheckoutDebitCardPaymentRequest): Debit Card payment
-            request
-        boleto (CreateCheckoutBoletoPaymentRequest): Boleto payment request
+        debit_card (CreateCheckoutDebitCardPaymentRequest): Checkout credit
+            card payment request
+        boleto (CreateCheckoutBoletoPaymentRequest): TODO: type description
+            here.
         customer_editable (bool): Customer is editable?
         expires_in (int): Time in minutes for expiration
         skip_checkout_success_page (bool): Skip postpay success screen?
         billing_address_editable (bool): Billing Address is editable?
-        billing_address (CreateAddressRequest): Billing Address
-        bank_transfer (CreateCheckoutBankTransferRequest): Bank Transfer
-            payment request
+        billing_address (CreateAddressRequest): Request for creating a new
+            Address
+        bank_transfer (CreateCheckoutBankTransferRequest): Checkout bank
+            transfer payment request
         accepted_brands (list of string): Accepted Brands
-        pix (CreateCheckoutPixPaymentRequest): Pix payment request
+        pix (CreateCheckoutPixPaymentRequest): Checkout pix payment request
 
     """
 

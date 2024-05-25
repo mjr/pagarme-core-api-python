@@ -16,8 +16,8 @@ class CreatePaymentAuthenticationRequest(object):
 
     Attributes:
         mtype (string): The Authentication type
-        threed_secure (CreateThreeDSecureRequest): The 3D-S authentication
-            object
+        threed_secure (CreateThreeDSecureRequest): Creates a 3D-S
+            authentication payment
 
     """
 

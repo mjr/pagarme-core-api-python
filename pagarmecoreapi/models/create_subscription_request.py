@@ -26,8 +26,8 @@ class CreateSubscriptionRequest(object):
     Request for creating a subcription
 
     Attributes:
-        customer (CreateCustomerRequest): Customer
-        card (CreateCardRequest): Card
+        customer (CreateCustomerRequest): Request for creating a new customer
+        card (CreateCardRequest): Card data
         code (string): Subscription code
         payment_method (string): Payment method
         billing_type (string): Billing type
@@ -37,13 +37,15 @@ class CreateSubscriptionRequest(object):
         currency (string): Currency
         interval (string): Interval
         interval_count (int): Interval count
-        pricing_scheme (CreatePricingSchemeRequest): Subscription pricing
-            scheme
+        pricing_scheme (CreatePricingSchemeRequest): Request for creating a
+            pricing scheme
         items (list of CreateSubscriptionItemRequest): Subscription items
-        shipping (CreateShippingRequest): Shipping
+        shipping (CreateShippingRequest): Shipping data
         discounts (list of CreateDiscountRequest): Discounts
         metadata (dict<object, string>): Metadata
-        setup (CreateSetupRequest): Setup data
+        setup (CreateSetupRequest): Request for creating a Setup for a
+            subscription. The setup is an order that will be created at the
+            subscription creation.
         plan_id (string): Plan id
         customer_id (string): Customer id
         card_id (string): Card id
@@ -59,7 +61,7 @@ class CreateSubscriptionRequest(object):
         increments (list of CreateIncrementRequest): Increments
         period (CreatePeriodRequest): TODO: type description here.
         submerchant (CreateSubMerchantRequest): SubMerchant
-        split (CreateSubscriptionSplitRequest): Subscription's split
+        split (CreateSubscriptionSplitRequest): TODO: type description here.
 
     """
 

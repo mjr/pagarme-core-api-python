@@ -17,7 +17,8 @@ class ListCyclesResponse(object):
 
     Attributes:
         data (list of GetPeriodResponse): The subscription cycles objects
-        paging (PagingResponse): Paging object
+        paging (PagingResponse): Object used for returning lists of objects
+            with pagination
 
     """
 

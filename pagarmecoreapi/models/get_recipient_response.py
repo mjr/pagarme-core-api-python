@@ -29,7 +29,8 @@ class GetRecipientResponse(object):
         created_at (datetime): Creation date
         updated_at (datetime): Last update date
         deleted_at (datetime): Deletion date
-        default_bank_account (GetBankAccountResponse): Default bank account
+        default_bank_account (GetBankAccountResponse): TODO: type description
+            here.
         gateway_recipients (list of GetGatewayRecipientResponse): Info about
             the recipient on the gateway
         metadata (dict<object, string>): Metadata
@@ -78,7 +79,7 @@ class GetRecipientResponse(object):
                  gateway_recipients=None,
                  metadata=None,
                  code=None,
-                 payment_mode='bank_transfer',
+                 payment_mode=None,
                  automatic_anticipation_settings=None,
                  transfer_settings=None):
         """Constructor for the GetRecipientResponse class"""
@@ -139,7 +140,7 @@ class GetRecipientResponse(object):
                 gateway_recipients.append(pagarmecoreapi.models.get_gateway_recipient_response.GetGatewayRecipientResponse.from_dictionary(structure))
         metadata = dictionary.get('metadata')
         code = dictionary.get('code')
-        payment_mode = dictionary.get("payment_mode") if dictionary.get("payment_mode") else 'bank_transfer'
+        payment_mode = dictionary.get('payment_mode')
         automatic_anticipation_settings = pagarmecoreapi.models.get_automatic_anticipation_response.GetAutomaticAnticipationResponse.from_dictionary(dictionary.get('automatic_anticipation_settings')) if dictionary.get('automatic_anticipation_settings') else None
         transfer_settings = pagarmecoreapi.models.get_transfer_settings_response.GetTransferSettingsResponse.from_dictionary(dictionary.get('transfer_settings')) if dictionary.get('transfer_settings') else None
 

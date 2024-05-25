@@ -21,7 +21,7 @@ class GetTransferResponse(object):
         status (string): Transfer status
         created_at (datetime): Transfer creation date
         updated_at (datetime): Transfer last update date
-        bank_account (GetBankAccountResponse): Bank account
+        bank_account (GetBankAccountResponse): TODO: type description here.
         metadata (dict<object, string>): Metadata
 
     """

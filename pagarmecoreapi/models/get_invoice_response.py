@@ -30,14 +30,16 @@ class GetInvoiceResponse(object):
         payment_method (string): TODO: type description here.
         created_at (datetime): TODO: type description here.
         items (list of GetInvoiceItemResponse): TODO: type description here.
-        customer (GetCustomerResponse): TODO: type description here.
-        charge (GetChargeResponse): TODO: type description here.
+        customer (GetCustomerResponse): Response object for getting a
+            customer
+        charge (GetChargeResponse): Response object for getting a charge
         installments (int): TODO: type description here.
-        billing_address (GetBillingAddressResponse): TODO: type description
-            here.
+        billing_address (GetBillingAddressResponse): Response object for
+            getting a billing address
         subscription (GetSubscriptionResponse): TODO: type description here.
-        cycle (GetPeriodResponse): TODO: type description here.
-        shipping (GetShippingResponse): TODO: type description here.
+        cycle (GetPeriodResponse): Response object for getting a period
+        shipping (GetShippingResponse): Response object for getting the
+            shipping data
         metadata (dict<object, string>): TODO: type description here.
         due_at (datetime): TODO: type description here.
         canceled_at (datetime): TODO: type description here.

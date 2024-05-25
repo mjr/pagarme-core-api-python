@@ -24,14 +24,19 @@ class UpdateChargePaymentMethodRequest(object):
         update_subscription (bool): Indicates if the payment method from the
             subscription must also be updated
         payment_method (string): The new payment method
-        credit_card (CreateCreditCardPaymentRequest): Credit card data
-        debit_card (CreateDebitCardPaymentRequest): Debit card data
-        boleto (CreateBoletoPaymentRequest): Boleto data
-        voucher (CreateVoucherPaymentRequest): Voucher data
-        cash (CreateCashPaymentRequest): Cash data
-        bank_transfer (CreateBankTransferPaymentRequest): Bank Transfer data
-        private_label (CreatePrivateLabelPaymentRequest): TODO: type
-            description here.
+        credit_card (CreateCreditCardPaymentRequest): The settings for
+            creating a credit card payment
+        debit_card (CreateDebitCardPaymentRequest): The settings for creating
+            a debit card payment
+        boleto (CreateBoletoPaymentRequest): Contains the settings for
+            creating a boleto payment
+        voucher (CreateVoucherPaymentRequest): The settings for creating a
+            voucher payment
+        cash (CreateCashPaymentRequest): TODO: type description here.
+        bank_transfer (CreateBankTransferPaymentRequest): Request for creating
+            a bank transfer payment
+        private_label (CreatePrivateLabelPaymentRequest): The settings for
+            creating a private label payment
 
     """
 

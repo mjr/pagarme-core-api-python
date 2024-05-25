@@ -17,7 +17,8 @@ class UpdateSubscriptionItemRequest(object):
     Attributes:
         description (string): Description
         status (string): Status
-        pricing_scheme (UpdatePricingSchemeRequest): Pricing scheme
+        pricing_scheme (UpdatePricingSchemeRequest): Request for updating a
+            pricing scheme
         name (string): Item name
         cycles (int): Number of cycles that the item will be charged
         quantity (int): Quantity

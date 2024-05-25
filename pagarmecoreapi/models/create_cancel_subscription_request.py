@@ -25,7 +25,7 @@ class CreateCancelSubscriptionRequest(object):
     }
 
     def __init__(self,
-                 cancel_pending_invoices=True):
+                 cancel_pending_invoices=None):
         """Constructor for the CreateCancelSubscriptionRequest class"""
 
         # Initialize members of the class
@@ -50,7 +50,7 @@ class CreateCancelSubscriptionRequest(object):
             return None
 
         # Extract variables from the dictionary
-        cancel_pending_invoices = dictionary.get("cancel_pending_invoices") if dictionary.get("cancel_pending_invoices") else True
+        cancel_pending_invoices = dictionary.get('cancel_pending_invoices')
 
         # Return an object of this model
         return cls(cancel_pending_invoices)

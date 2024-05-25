@@ -17,7 +17,8 @@ class ListCardsResponse(object):
 
     Attributes:
         data (list of GetCardResponse): The card objects
-        paging (PagingResponse): Paging object
+        paging (PagingResponse): Object used for returning lists of objects
+            with pagination
 
     """
 

@@ -29,16 +29,20 @@ class GetChargeResponse(object):
         due_at (datetime): TODO: type description here.
         created_at (datetime): TODO: type description here.
         updated_at (datetime): TODO: type description here.
-        last_transaction (GetTransactionResponse): TODO: type description
-            here.
-        invoice (GetInvoiceResponse): TODO: type description here.
-        order (GetOrderResponse): TODO: type description here.
-        customer (GetCustomerResponse): TODO: type description here.
+        last_transaction (GetTransactionResponse): Generic response object for
+            getting a transaction.
+        invoice (GetInvoiceResponse): Response object for getting an invoice
+        order (GetOrderResponse): Response object for getting an Order
+        customer (GetCustomerResponse): Response object for getting a
+            customer
         metadata (dict<object, string>): TODO: type description here.
         paid_at (datetime): TODO: type description here.
         canceled_at (datetime): TODO: type description here.
         canceled_amount (int): Canceled Amount
         paid_amount (int): Paid amount
+        recurrency_cycle (string): Defines whether the card has been used one
+            or more times.
+        interest_and_fine_paid (int): interest and fine paid
 
     """
 
@@ -62,7 +66,9 @@ class GetChargeResponse(object):
         "order":'order',
         "customer":'customer',
         "paid_at":'paid_at',
-        "canceled_at":'canceled_at'
+        "canceled_at":'canceled_at',
+        "recurrency_cycle":'recurrency_cycle',
+        "interest_and_fine_paid":'interest_and_fine_paid'
     }
 
     def __init__(self,
@@ -84,7 +90,9 @@ class GetChargeResponse(object):
                  order=None,
                  customer=None,
                  paid_at=None,
-                 canceled_at=None):
+                 canceled_at=None,
+                 recurrency_cycle=None,
+                 interest_and_fine_paid=None):
         """Constructor for the GetChargeResponse class"""
 
         # Initialize members of the class
@@ -107,6 +115,8 @@ class GetChargeResponse(object):
         self.canceled_at = APIHelper.RFC3339DateTime(canceled_at) if canceled_at else None
         self.canceled_amount = canceled_amount
         self.paid_amount = paid_amount
+        self.recurrency_cycle = recurrency_cycle
+        self.interest_and_fine_paid = interest_and_fine_paid
 
 
     @classmethod
@@ -146,6 +156,8 @@ class GetChargeResponse(object):
         customer = pagarmecoreapi.models.get_customer_response.GetCustomerResponse.from_dictionary(dictionary.get('customer')) if dictionary.get('customer') else None
         paid_at = APIHelper.RFC3339DateTime.from_value(dictionary.get("paid_at")).datetime if dictionary.get("paid_at") else None
         canceled_at = APIHelper.RFC3339DateTime.from_value(dictionary.get("canceled_at")).datetime if dictionary.get("canceled_at") else None
+        recurrency_cycle = dictionary.get('recurrency_cycle')
+        interest_and_fine_paid = dictionary.get('interest_and_fine_paid')
 
         # Return an object of this model
         return cls(id,
@@ -166,6 +178,8 @@ class GetChargeResponse(object):
                    order,
                    customer,
                    paid_at,
-                   canceled_at)
+                   canceled_at,
+                   recurrency_cycle,
+                   interest_and_fine_paid)
 
 

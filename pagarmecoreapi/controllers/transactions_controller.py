@@ -11,6 +11,7 @@ from pagarmecoreapi.configuration import Configuration
 from pagarmecoreapi.controllers.base_controller import BaseController
 from pagarmecoreapi.http.auth.basic_auth import BasicAuth
 from pagarmecoreapi.models.get_transaction_response import GetTransactionResponse
+from pagarmecoreapi.exceptions.error_exception import ErrorException
 
 class TransactionsController(BaseController):
 
@@ -21,7 +22,7 @@ class TransactionsController(BaseController):
                         transaction_id):
         """Does a GET request to /transactions/{transaction_id}.
 
-        TODO: type endpoint description here.
+        GetTransaction
 
         Args:
             transaction_id (string): TODO: type description here. Example: 
@@ -48,13 +49,28 @@ class TransactionsController(BaseController):
 
         # Prepare headers
         _headers = {
-            'accept': 'application/json'
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name
         }
 
         # Prepare and execute request
         _request = self.http_client.get(_query_url, headers=_headers)
         BasicAuth.apply(_request)
         _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
         self.validate_response(_context)
 
         # Return appropriate type

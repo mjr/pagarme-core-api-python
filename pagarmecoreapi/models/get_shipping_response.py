@@ -20,7 +20,7 @@ class GetShippingResponse(object):
         description (string): TODO: type description here.
         recipient_name (string): TODO: type description here.
         recipient_phone (string): TODO: type description here.
-        address (GetAddressResponse): TODO: type description here.
+        address (GetAddressResponse): Response object for getting an Address
         max_delivery_date (datetime): Data máxima de entrega
         estimated_delivery_date (datetime): Prazo estimado de entrega
         mtype (string): Shipping Type

@@ -29,7 +29,7 @@ class GetBankAccountResponse(object):
         created_at (datetime): Creation date
         updated_at (datetime): Last update date
         deleted_at (datetime): Deletion date
-        recipient (GetRecipientResponse): Recipient
+        recipient (GetRecipientResponse): Recipient response
         metadata (dict<object, string>): Metadata
         pix_key (string): Pix Key
 

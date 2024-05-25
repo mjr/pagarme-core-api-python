@@ -16,7 +16,8 @@ class CreatePlanItemRequest(object):
 
     Attributes:
         name (string): Item name
-        pricing_scheme (CreatePricingSchemeRequest): Item's pricing scheme
+        pricing_scheme (CreatePricingSchemeRequest): Request for creating a
+            pricing scheme
         id (string): Item's id
         description (string): Item's description
         cycles (int): Number of cycles where the item will be charged

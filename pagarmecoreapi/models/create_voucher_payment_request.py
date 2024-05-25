@@ -19,7 +19,10 @@ class CreateVoucherPaymentRequest(object):
             voucher's statement
         card_id (string): Card id
         card_token (string): Card token
-        card (CreateCardRequest): Card info
+        card (CreateCardRequest): Card data
+        recurrency_cycle (string): Defines whether the card has been used one
+            or more times.
+        merchant_category_code (long|int): Customer business segment code
 
     """
 
@@ -28,14 +31,18 @@ class CreateVoucherPaymentRequest(object):
         "statement_descriptor":'statement_descriptor',
         "card_id":'card_id',
         "card_token":'card_token',
-        "card":'Card'
+        "card":'Card',
+        "recurrency_cycle":'recurrency_cycle',
+        "merchant_category_code":'merchant_category_code'
     }
 
     def __init__(self,
                  statement_descriptor=None,
                  card_id=None,
                  card_token=None,
-                 card=None):
+                 card=None,
+                 recurrency_cycle=None,
+                 merchant_category_code=None):
         """Constructor for the CreateVoucherPaymentRequest class"""
 
         # Initialize members of the class
@@ -43,6 +50,8 @@ class CreateVoucherPaymentRequest(object):
         self.card_id = card_id
         self.card_token = card_token
         self.card = card
+        self.recurrency_cycle = recurrency_cycle
+        self.merchant_category_code = merchant_category_code
 
 
     @classmethod
@@ -67,11 +76,15 @@ class CreateVoucherPaymentRequest(object):
         card_id = dictionary.get('card_id')
         card_token = dictionary.get('card_token')
         card = pagarmecoreapi.models.create_card_request.CreateCardRequest.from_dictionary(dictionary.get('Card')) if dictionary.get('Card') else None
+        recurrency_cycle = dictionary.get('recurrency_cycle')
+        merchant_category_code = dictionary.get('merchant_category_code')
 
         # Return an object of this model
         return cls(statement_descriptor,
                    card_id,
                    card_token,
-                   card)
+                   card,
+                   recurrency_cycle,
+                   merchant_category_code)
 
 

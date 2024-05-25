@@ -10,6 +10,8 @@ from pagarmecoreapi.api_helper import APIHelper
 import pagarmecoreapi.models.get_split_response
 import pagarmecoreapi.models.get_gateway_response_response
 import pagarmecoreapi.models.get_antifraud_response
+import pagarmecoreapi.models.get_interest_response
+import pagarmecoreapi.models.get_fine_response
 import pagarmecoreapi.models.get_card_response
 import pagarmecoreapi.models.get_billing_address_response
 import pagarmecoreapi.models.pix_additional_information
@@ -34,11 +36,15 @@ class GetTransactionResponse(object):
         next_attempt (datetime): Date and time of the next attempt
         transaction_type (string): TODO: type description here.
         id (string): Código da transação
-        gateway_response (GetGatewayResponseResponse): The Gateway Response
+        gateway_response (GetGatewayResponseResponse): The Transaction Gateway
+            Response
         antifraud_response (GetAntifraudResponse): TODO: type description
             here.
         metadata (dict<object, string>): TODO: type description here.
         split (list of GetSplitResponse): TODO: type description here.
+        interest (GetInterestResponse): Interest response
+        fine (GetFineResponse): Fine Response
+        max_days_to_pay_past_due (int): TODO: type description here.
 
     """
 
@@ -59,7 +65,10 @@ class GetTransactionResponse(object):
         "split":'split',
         "next_attempt":'next_attempt',
         "transaction_type":'transaction_type',
-        "metadata":'metadata'
+        "metadata":'metadata',
+        "interest":'interest',
+        "fine":'fine',
+        "max_days_to_pay_past_due":'max_days_to_pay_past_due'
     }
 
     def __init__(self,
@@ -78,7 +87,10 @@ class GetTransactionResponse(object):
                  split=None,
                  next_attempt=None,
                  transaction_type=None,
-                 metadata=None):
+                 metadata=None,
+                 interest=None,
+                 fine=None,
+                 max_days_to_pay_past_due=None):
         """Constructor for the GetTransactionResponse class"""
 
         # Initialize members of the class
@@ -98,6 +110,9 @@ class GetTransactionResponse(object):
         self.antifraud_response = antifraud_response
         self.metadata = metadata
         self.split = split
+        self.interest = interest
+        self.fine = fine
+        self.max_days_to_pay_past_due = max_days_to_pay_past_due
 
 
     @classmethod
@@ -118,15 +133,15 @@ class GetTransactionResponse(object):
             return None
 
         discriminators = {
-            'bank_transfer': GetBankTransferTransactionResponse.from_dictionary,
             'safetypay': GetSafetyPayTransactionResponse.from_dictionary,
+            'bank_transfer': GetBankTransferTransactionResponse.from_dictionary,
             'voucher': GetVoucherTransactionResponse.from_dictionary,
-            'boleto': GetBoletoTransactionResponse.from_dictionary,
             'debit_card': GetDebitCardTransactionResponse.from_dictionary,
             'private_label': GetPrivateLabelTransactionResponse.from_dictionary,
             'cash': GetCashTransactionResponse.from_dictionary,
-            'credit_card': GetCreditCardTransactionResponse.from_dictionary,
-            'pix': GetPixTransactionResponse.from_dictionary
+            'boleto': GetBoletoTransactionResponse.from_dictionary,
+            'pix': GetPixTransactionResponse.from_dictionary,
+            'credit_card': GetCreditCardTransactionResponse.from_dictionary
         }
         unboxer = discriminators.get(dictionary.get('transaction_type'))
 
@@ -160,6 +175,9 @@ class GetTransactionResponse(object):
         next_attempt = APIHelper.RFC3339DateTime.from_value(dictionary.get("next_attempt")).datetime if dictionary.get("next_attempt") else None
         transaction_type = dictionary.get('transaction_type')
         metadata = dictionary.get('metadata')
+        interest = pagarmecoreapi.models.get_interest_response.GetInterestResponse.from_dictionary(dictionary.get('interest')) if dictionary.get('interest') else None
+        fine = pagarmecoreapi.models.get_fine_response.GetFineResponse.from_dictionary(dictionary.get('fine')) if dictionary.get('fine') else None
+        max_days_to_pay_past_due = dictionary.get('max_days_to_pay_past_due')
 
         # Return an object of this model
         return cls(gateway_id,
@@ -177,7 +195,182 @@ class GetTransactionResponse(object):
                    split,
                    next_attempt,
                    transaction_type,
-                   metadata)
+                   metadata,
+                   interest,
+                   fine,
+                   max_days_to_pay_past_due)
+
+
+class GetSafetyPayTransactionResponse(GetTransactionResponse):
+
+    """Implementation of the 'GetSafetyPayTransactionResponse' model.
+
+    Response object for getting a safety pay transaction
+    NOTE: This class inherits from 'GetTransactionResponse'.
+
+    Attributes:
+        url (string): Payment url
+        bank_tid (string): Transaction identifier on bank
+        paid_at (datetime): Payment date
+        paid_amount (int): Paid amount
+
+    """
+
+    # Create a mapping from Model property names to API property names
+    _names = {
+        "url":'url',
+        "bank_tid":'bank_tid',
+        "gateway_id":'gateway_id',
+        "amount":'amount',
+        "status":'status',
+        "success":'success',
+        "created_at":'created_at',
+        "updated_at":'updated_at',
+        "attempt_count":'attempt_count',
+        "max_attempts":'max_attempts',
+        "splits":'splits',
+        "id":'id',
+        "gateway_response":'gateway_response',
+        "antifraud_response":'antifraud_response',
+        "split":'split',
+        "paid_at":'paid_at',
+        "paid_amount":'paid_amount',
+        "next_attempt":'next_attempt',
+        "transaction_type":'transaction_type',
+        "metadata":'metadata',
+        "interest":'interest',
+        "fine":'fine',
+        "max_days_to_pay_past_due":'max_days_to_pay_past_due'
+    }
+
+    def __init__(self,
+                 url=None,
+                 bank_tid=None,
+                 gateway_id=None,
+                 amount=None,
+                 status=None,
+                 success=None,
+                 created_at=None,
+                 updated_at=None,
+                 attempt_count=None,
+                 max_attempts=None,
+                 splits=None,
+                 id=None,
+                 gateway_response=None,
+                 antifraud_response=None,
+                 split=None,
+                 paid_at=None,
+                 paid_amount=None,
+                 next_attempt=None,
+                 transaction_type=None,
+                 metadata=None,
+                 interest=None,
+                 fine=None,
+                 max_days_to_pay_past_due=None):
+        """Constructor for the GetSafetyPayTransactionResponse class"""
+
+        # Initialize members of the class
+        self.url = url
+        self.bank_tid = bank_tid
+        self.paid_at = APIHelper.RFC3339DateTime(paid_at) if paid_at else None
+        self.paid_amount = paid_amount
+
+        # Call the constructor for the base class
+        super(GetSafetyPayTransactionResponse, self).__init__(gateway_id,
+                                                              amount,
+                                                              status,
+                                                              success,
+                                                              created_at,
+                                                              updated_at,
+                                                              attempt_count,
+                                                              max_attempts,
+                                                              splits,
+                                                              id,
+                                                              gateway_response,
+                                                              antifraud_response,
+                                                              split,
+                                                              next_attempt,
+                                                              transaction_type,
+                                                              metadata,
+                                                              interest,
+                                                              fine,
+                                                              max_days_to_pay_past_due)
+
+
+    @classmethod
+    def from_dictionary(cls,
+                        dictionary):
+        """Creates an instance of this model from a dictionary
+
+        Args:
+            dictionary (dictionary): A dictionary representation of the object as
+            obtained from the deserialization of the server's response. The keys
+            MUST match property names in the API description.
+
+        Returns:
+            object: An instance of this structure class.
+
+        """
+        if dictionary is None:
+            return None
+
+        # Extract variables from the dictionary
+        url = dictionary.get('url')
+        bank_tid = dictionary.get('bank_tid')
+        gateway_id = dictionary.get('gateway_id')
+        amount = dictionary.get('amount')
+        status = dictionary.get('status')
+        success = dictionary.get('success')
+        created_at = APIHelper.RFC3339DateTime.from_value(dictionary.get("created_at")).datetime if dictionary.get("created_at") else None
+        updated_at = APIHelper.RFC3339DateTime.from_value(dictionary.get("updated_at")).datetime if dictionary.get("updated_at") else None
+        attempt_count = dictionary.get('attempt_count')
+        max_attempts = dictionary.get('max_attempts')
+        splits = None
+        if dictionary.get('splits') != None:
+            splits = list()
+            for structure in dictionary.get('splits'):
+                splits.append(pagarmecoreapi.models.get_split_response.GetSplitResponse.from_dictionary(structure))
+        id = dictionary.get('id')
+        gateway_response = pagarmecoreapi.models.get_gateway_response_response.GetGatewayResponseResponse.from_dictionary(dictionary.get('gateway_response')) if dictionary.get('gateway_response') else None
+        antifraud_response = pagarmecoreapi.models.get_antifraud_response.GetAntifraudResponse.from_dictionary(dictionary.get('antifraud_response')) if dictionary.get('antifraud_response') else None
+        split = None
+        if dictionary.get('split') != None:
+            split = list()
+            for structure in dictionary.get('split'):
+                split.append(pagarmecoreapi.models.get_split_response.GetSplitResponse.from_dictionary(structure))
+        paid_at = APIHelper.RFC3339DateTime.from_value(dictionary.get("paid_at")).datetime if dictionary.get("paid_at") else None
+        paid_amount = dictionary.get('paid_amount')
+        next_attempt = APIHelper.RFC3339DateTime.from_value(dictionary.get("next_attempt")).datetime if dictionary.get("next_attempt") else None
+        transaction_type = dictionary.get('transaction_type')
+        metadata = dictionary.get('metadata')
+        interest = pagarmecoreapi.models.get_interest_response.GetInterestResponse.from_dictionary(dictionary.get('interest')) if dictionary.get('interest') else None
+        fine = pagarmecoreapi.models.get_fine_response.GetFineResponse.from_dictionary(dictionary.get('fine')) if dictionary.get('fine') else None
+        max_days_to_pay_past_due = dictionary.get('max_days_to_pay_past_due')
+
+        # Return an object of this model
+        return cls(url,
+                   bank_tid,
+                   gateway_id,
+                   amount,
+                   status,
+                   success,
+                   created_at,
+                   updated_at,
+                   attempt_count,
+                   max_attempts,
+                   splits,
+                   id,
+                   gateway_response,
+                   antifraud_response,
+                   split,
+                   paid_at,
+                   paid_amount,
+                   next_attempt,
+                   transaction_type,
+                   metadata,
+                   interest,
+                   fine,
+                   max_days_to_pay_past_due)
 
 
 class GetBankTransferTransactionResponse(GetTransactionResponse):
@@ -218,7 +411,10 @@ class GetBankTransferTransactionResponse(GetTransactionResponse):
         "paid_amount":'paid_amount',
         "next_attempt":'next_attempt',
         "transaction_type":'transaction_type',
-        "metadata":'metadata'
+        "metadata":'metadata',
+        "interest":'interest',
+        "fine":'fine',
+        "max_days_to_pay_past_due":'max_days_to_pay_past_due'
     }
 
     def __init__(self,
@@ -242,7 +438,10 @@ class GetBankTransferTransactionResponse(GetTransactionResponse):
                  paid_amount=None,
                  next_attempt=None,
                  transaction_type=None,
-                 metadata=None):
+                 metadata=None,
+                 interest=None,
+                 fine=None,
+                 max_days_to_pay_past_due=None):
         """Constructor for the GetBankTransferTransactionResponse class"""
 
         # Initialize members of the class
@@ -268,7 +467,10 @@ class GetBankTransferTransactionResponse(GetTransactionResponse):
                                                                  split,
                                                                  next_attempt,
                                                                  transaction_type,
-                                                                 metadata)
+                                                                 metadata,
+                                                                 interest,
+                                                                 fine,
+                                                                 max_days_to_pay_past_due)
 
 
     @classmethod
@@ -318,6 +520,9 @@ class GetBankTransferTransactionResponse(GetTransactionResponse):
         next_attempt = APIHelper.RFC3339DateTime.from_value(dictionary.get("next_attempt")).datetime if dictionary.get("next_attempt") else None
         transaction_type = dictionary.get('transaction_type')
         metadata = dictionary.get('metadata')
+        interest = pagarmecoreapi.models.get_interest_response.GetInterestResponse.from_dictionary(dictionary.get('interest')) if dictionary.get('interest') else None
+        fine = pagarmecoreapi.models.get_fine_response.GetFineResponse.from_dictionary(dictionary.get('fine')) if dictionary.get('fine') else None
+        max_days_to_pay_past_due = dictionary.get('max_days_to_pay_past_due')
 
         # Return an object of this model
         return cls(url,
@@ -340,164 +545,10 @@ class GetBankTransferTransactionResponse(GetTransactionResponse):
                    paid_amount,
                    next_attempt,
                    transaction_type,
-                   metadata)
-
-
-class GetSafetyPayTransactionResponse(GetTransactionResponse):
-
-    """Implementation of the 'GetSafetyPayTransactionResponse' model.
-
-    Response object for getting a safety pay transaction
-    NOTE: This class inherits from 'GetTransactionResponse'.
-
-    Attributes:
-        url (string): Payment url
-        bank_tid (string): Transaction identifier on bank
-        paid_at (datetime): Payment date
-        paid_amount (int): Paid amount
-
-    """
-
-    # Create a mapping from Model property names to API property names
-    _names = {
-        "url":'url',
-        "bank_tid":'bank_tid',
-        "gateway_id":'gateway_id',
-        "amount":'amount',
-        "status":'status',
-        "success":'success',
-        "created_at":'created_at',
-        "updated_at":'updated_at',
-        "attempt_count":'attempt_count',
-        "max_attempts":'max_attempts',
-        "splits":'splits',
-        "id":'id',
-        "gateway_response":'gateway_response',
-        "antifraud_response":'antifraud_response',
-        "split":'split',
-        "paid_at":'paid_at',
-        "paid_amount":'paid_amount',
-        "next_attempt":'next_attempt',
-        "transaction_type":'transaction_type',
-        "metadata":'metadata'
-    }
-
-    def __init__(self,
-                 url=None,
-                 bank_tid=None,
-                 gateway_id=None,
-                 amount=None,
-                 status=None,
-                 success=None,
-                 created_at=None,
-                 updated_at=None,
-                 attempt_count=None,
-                 max_attempts=None,
-                 splits=None,
-                 id=None,
-                 gateway_response=None,
-                 antifraud_response=None,
-                 split=None,
-                 paid_at=None,
-                 paid_amount=None,
-                 next_attempt=None,
-                 transaction_type=None,
-                 metadata=None):
-        """Constructor for the GetSafetyPayTransactionResponse class"""
-
-        # Initialize members of the class
-        self.url = url
-        self.bank_tid = bank_tid
-        self.paid_at = APIHelper.RFC3339DateTime(paid_at) if paid_at else None
-        self.paid_amount = paid_amount
-
-        # Call the constructor for the base class
-        super(GetSafetyPayTransactionResponse, self).__init__(gateway_id,
-                                                              amount,
-                                                              status,
-                                                              success,
-                                                              created_at,
-                                                              updated_at,
-                                                              attempt_count,
-                                                              max_attempts,
-                                                              splits,
-                                                              id,
-                                                              gateway_response,
-                                                              antifraud_response,
-                                                              split,
-                                                              next_attempt,
-                                                              transaction_type,
-                                                              metadata)
-
-
-    @classmethod
-    def from_dictionary(cls,
-                        dictionary):
-        """Creates an instance of this model from a dictionary
-
-        Args:
-            dictionary (dictionary): A dictionary representation of the object as
-            obtained from the deserialization of the server's response. The keys
-            MUST match property names in the API description.
-
-        Returns:
-            object: An instance of this structure class.
-
-        """
-        if dictionary is None:
-            return None
-
-        # Extract variables from the dictionary
-        url = dictionary.get('url')
-        bank_tid = dictionary.get('bank_tid')
-        gateway_id = dictionary.get('gateway_id')
-        amount = dictionary.get('amount')
-        status = dictionary.get('status')
-        success = dictionary.get('success')
-        created_at = APIHelper.RFC3339DateTime.from_value(dictionary.get("created_at")).datetime if dictionary.get("created_at") else None
-        updated_at = APIHelper.RFC3339DateTime.from_value(dictionary.get("updated_at")).datetime if dictionary.get("updated_at") else None
-        attempt_count = dictionary.get('attempt_count')
-        max_attempts = dictionary.get('max_attempts')
-        splits = None
-        if dictionary.get('splits') != None:
-            splits = list()
-            for structure in dictionary.get('splits'):
-                splits.append(pagarmecoreapi.models.get_split_response.GetSplitResponse.from_dictionary(structure))
-        id = dictionary.get('id')
-        gateway_response = pagarmecoreapi.models.get_gateway_response_response.GetGatewayResponseResponse.from_dictionary(dictionary.get('gateway_response')) if dictionary.get('gateway_response') else None
-        antifraud_response = pagarmecoreapi.models.get_antifraud_response.GetAntifraudResponse.from_dictionary(dictionary.get('antifraud_response')) if dictionary.get('antifraud_response') else None
-        split = None
-        if dictionary.get('split') != None:
-            split = list()
-            for structure in dictionary.get('split'):
-                split.append(pagarmecoreapi.models.get_split_response.GetSplitResponse.from_dictionary(structure))
-        paid_at = APIHelper.RFC3339DateTime.from_value(dictionary.get("paid_at")).datetime if dictionary.get("paid_at") else None
-        paid_amount = dictionary.get('paid_amount')
-        next_attempt = APIHelper.RFC3339DateTime.from_value(dictionary.get("next_attempt")).datetime if dictionary.get("next_attempt") else None
-        transaction_type = dictionary.get('transaction_type')
-        metadata = dictionary.get('metadata')
-
-        # Return an object of this model
-        return cls(url,
-                   bank_tid,
-                   gateway_id,
-                   amount,
-                   status,
-                   success,
-                   created_at,
-                   updated_at,
-                   attempt_count,
-                   max_attempts,
-                   splits,
-                   id,
-                   gateway_response,
-                   antifraud_response,
-                   split,
-                   paid_at,
-                   paid_amount,
-                   next_attempt,
-                   transaction_type,
-                   metadata)
+                   metadata,
+                   interest,
+                   fine,
+                   max_days_to_pay_past_due)
 
 
 class GetVoucherTransactionResponse(GetTransactionResponse):
@@ -518,7 +569,7 @@ class GetVoucherTransactionResponse(GetTransactionResponse):
         acquirer_message (string): acquirer_message
         acquirer_return_code (string): Acquirer return code
         operation_type (string): Operation type
-        card (GetCardResponse): Card data
+        card (GetCardResponse): Response object for getting a credit card
 
     """
 
@@ -549,7 +600,10 @@ class GetVoucherTransactionResponse(GetTransactionResponse):
         "split":'split',
         "next_attempt":'next_attempt',
         "transaction_type":'transaction_type',
-        "metadata":'metadata'
+        "metadata":'metadata',
+        "interest":'interest',
+        "fine":'fine',
+        "max_days_to_pay_past_due":'max_days_to_pay_past_due'
     }
 
     def __init__(self,
@@ -578,7 +632,10 @@ class GetVoucherTransactionResponse(GetTransactionResponse):
                  split=None,
                  next_attempt=None,
                  transaction_type=None,
-                 metadata=None):
+                 metadata=None,
+                 interest=None,
+                 fine=None,
+                 max_days_to_pay_past_due=None):
         """Constructor for the GetVoucherTransactionResponse class"""
 
         # Initialize members of the class
@@ -609,7 +666,10 @@ class GetVoucherTransactionResponse(GetTransactionResponse):
                                                             split,
                                                             next_attempt,
                                                             transaction_type,
-                                                            metadata)
+                                                            metadata,
+                                                            interest,
+                                                            fine,
+                                                            max_days_to_pay_past_due)
 
 
     @classmethod
@@ -664,6 +724,9 @@ class GetVoucherTransactionResponse(GetTransactionResponse):
         next_attempt = APIHelper.RFC3339DateTime.from_value(dictionary.get("next_attempt")).datetime if dictionary.get("next_attempt") else None
         transaction_type = dictionary.get('transaction_type')
         metadata = dictionary.get('metadata')
+        interest = pagarmecoreapi.models.get_interest_response.GetInterestResponse.from_dictionary(dictionary.get('interest')) if dictionary.get('interest') else None
+        fine = pagarmecoreapi.models.get_fine_response.GetFineResponse.from_dictionary(dictionary.get('fine')) if dictionary.get('fine') else None
+        max_days_to_pay_past_due = dictionary.get('max_days_to_pay_past_due')
 
         # Return an object of this model
         return cls(statement_descriptor,
@@ -691,7 +754,619 @@ class GetVoucherTransactionResponse(GetTransactionResponse):
                    split,
                    next_attempt,
                    transaction_type,
-                   metadata)
+                   metadata,
+                   interest,
+                   fine,
+                   max_days_to_pay_past_due)
+
+
+class GetDebitCardTransactionResponse(GetTransactionResponse):
+
+    """Implementation of the 'GetDebitCardTransactionResponse' model.
+
+    Response object for getting a debit card transaction
+    NOTE: This class inherits from 'GetTransactionResponse'.
+
+    Attributes:
+        statement_descriptor (string): Text that will appear on the debit
+            card's statement
+        acquirer_name (string): Acquirer name
+        acquirer_affiliation_code (string): Aquirer affiliation code
+        acquirer_tid (string): Acquirer TID
+        acquirer_nsu (string): Acquirer NSU
+        acquirer_auth_code (string): Acquirer authorization code
+        operation_type (string): Operation type
+        card (GetCardResponse): Response object for getting a credit card
+        acquirer_message (string): Acquirer message
+        acquirer_return_code (string): Acquirer Return Code
+        mpi (string): Merchant Plugin
+        eci (string): Electronic Commerce Indicator (ECI)
+        authentication_type (string): Authentication type
+        threed_authentication_url (string): 3D-S Authentication Url
+        funding_source (string): Identify when a card is prepaid, credit or
+            debit.
+
+    """
+
+    # Create a mapping from Model property names to API property names
+    _names = {
+        "statement_descriptor":'statement_descriptor',
+        "acquirer_name":'acquirer_name',
+        "acquirer_affiliation_code":'acquirer_affiliation_code',
+        "acquirer_tid":'acquirer_tid',
+        "acquirer_nsu":'acquirer_nsu',
+        "acquirer_auth_code":'acquirer_auth_code',
+        "operation_type":'operation_type',
+        "card":'card',
+        "acquirer_message":'acquirer_message',
+        "acquirer_return_code":'acquirer_return_code',
+        "mpi":'mpi',
+        "eci":'eci',
+        "authentication_type":'authentication_type',
+        "threed_authentication_url":'threed_authentication_url',
+        "gateway_id":'gateway_id',
+        "amount":'amount',
+        "status":'status',
+        "success":'success',
+        "created_at":'created_at',
+        "updated_at":'updated_at',
+        "attempt_count":'attempt_count',
+        "max_attempts":'max_attempts',
+        "splits":'splits',
+        "id":'id',
+        "gateway_response":'gateway_response',
+        "antifraud_response":'antifraud_response',
+        "split":'split',
+        "funding_source":'funding_source',
+        "next_attempt":'next_attempt',
+        "transaction_type":'transaction_type',
+        "metadata":'metadata',
+        "interest":'interest',
+        "fine":'fine',
+        "max_days_to_pay_past_due":'max_days_to_pay_past_due'
+    }
+
+    def __init__(self,
+                 statement_descriptor=None,
+                 acquirer_name=None,
+                 acquirer_affiliation_code=None,
+                 acquirer_tid=None,
+                 acquirer_nsu=None,
+                 acquirer_auth_code=None,
+                 operation_type=None,
+                 card=None,
+                 acquirer_message=None,
+                 acquirer_return_code=None,
+                 mpi=None,
+                 eci=None,
+                 authentication_type=None,
+                 threed_authentication_url=None,
+                 gateway_id=None,
+                 amount=None,
+                 status=None,
+                 success=None,
+                 created_at=None,
+                 updated_at=None,
+                 attempt_count=None,
+                 max_attempts=None,
+                 splits=None,
+                 id=None,
+                 gateway_response=None,
+                 antifraud_response=None,
+                 split=None,
+                 funding_source=None,
+                 next_attempt=None,
+                 transaction_type=None,
+                 metadata=None,
+                 interest=None,
+                 fine=None,
+                 max_days_to_pay_past_due=None):
+        """Constructor for the GetDebitCardTransactionResponse class"""
+
+        # Initialize members of the class
+        self.statement_descriptor = statement_descriptor
+        self.acquirer_name = acquirer_name
+        self.acquirer_affiliation_code = acquirer_affiliation_code
+        self.acquirer_tid = acquirer_tid
+        self.acquirer_nsu = acquirer_nsu
+        self.acquirer_auth_code = acquirer_auth_code
+        self.operation_type = operation_type
+        self.card = card
+        self.acquirer_message = acquirer_message
+        self.acquirer_return_code = acquirer_return_code
+        self.mpi = mpi
+        self.eci = eci
+        self.authentication_type = authentication_type
+        self.threed_authentication_url = threed_authentication_url
+        self.funding_source = funding_source
+
+        # Call the constructor for the base class
+        super(GetDebitCardTransactionResponse, self).__init__(gateway_id,
+                                                              amount,
+                                                              status,
+                                                              success,
+                                                              created_at,
+                                                              updated_at,
+                                                              attempt_count,
+                                                              max_attempts,
+                                                              splits,
+                                                              id,
+                                                              gateway_response,
+                                                              antifraud_response,
+                                                              split,
+                                                              next_attempt,
+                                                              transaction_type,
+                                                              metadata,
+                                                              interest,
+                                                              fine,
+                                                              max_days_to_pay_past_due)
+
+
+    @classmethod
+    def from_dictionary(cls,
+                        dictionary):
+        """Creates an instance of this model from a dictionary
+
+        Args:
+            dictionary (dictionary): A dictionary representation of the object as
+            obtained from the deserialization of the server's response. The keys
+            MUST match property names in the API description.
+
+        Returns:
+            object: An instance of this structure class.
+
+        """
+        if dictionary is None:
+            return None
+
+        # Extract variables from the dictionary
+        statement_descriptor = dictionary.get('statement_descriptor')
+        acquirer_name = dictionary.get('acquirer_name')
+        acquirer_affiliation_code = dictionary.get('acquirer_affiliation_code')
+        acquirer_tid = dictionary.get('acquirer_tid')
+        acquirer_nsu = dictionary.get('acquirer_nsu')
+        acquirer_auth_code = dictionary.get('acquirer_auth_code')
+        operation_type = dictionary.get('operation_type')
+        card = pagarmecoreapi.models.get_card_response.GetCardResponse.from_dictionary(dictionary.get('card')) if dictionary.get('card') else None
+        acquirer_message = dictionary.get('acquirer_message')
+        acquirer_return_code = dictionary.get('acquirer_return_code')
+        mpi = dictionary.get('mpi')
+        eci = dictionary.get('eci')
+        authentication_type = dictionary.get('authentication_type')
+        threed_authentication_url = dictionary.get('threed_authentication_url')
+        gateway_id = dictionary.get('gateway_id')
+        amount = dictionary.get('amount')
+        status = dictionary.get('status')
+        success = dictionary.get('success')
+        created_at = APIHelper.RFC3339DateTime.from_value(dictionary.get("created_at")).datetime if dictionary.get("created_at") else None
+        updated_at = APIHelper.RFC3339DateTime.from_value(dictionary.get("updated_at")).datetime if dictionary.get("updated_at") else None
+        attempt_count = dictionary.get('attempt_count')
+        max_attempts = dictionary.get('max_attempts')
+        splits = None
+        if dictionary.get('splits') != None:
+            splits = list()
+            for structure in dictionary.get('splits'):
+                splits.append(pagarmecoreapi.models.get_split_response.GetSplitResponse.from_dictionary(structure))
+        id = dictionary.get('id')
+        gateway_response = pagarmecoreapi.models.get_gateway_response_response.GetGatewayResponseResponse.from_dictionary(dictionary.get('gateway_response')) if dictionary.get('gateway_response') else None
+        antifraud_response = pagarmecoreapi.models.get_antifraud_response.GetAntifraudResponse.from_dictionary(dictionary.get('antifraud_response')) if dictionary.get('antifraud_response') else None
+        split = None
+        if dictionary.get('split') != None:
+            split = list()
+            for structure in dictionary.get('split'):
+                split.append(pagarmecoreapi.models.get_split_response.GetSplitResponse.from_dictionary(structure))
+        funding_source = dictionary.get('funding_source')
+        next_attempt = APIHelper.RFC3339DateTime.from_value(dictionary.get("next_attempt")).datetime if dictionary.get("next_attempt") else None
+        transaction_type = dictionary.get('transaction_type')
+        metadata = dictionary.get('metadata')
+        interest = pagarmecoreapi.models.get_interest_response.GetInterestResponse.from_dictionary(dictionary.get('interest')) if dictionary.get('interest') else None
+        fine = pagarmecoreapi.models.get_fine_response.GetFineResponse.from_dictionary(dictionary.get('fine')) if dictionary.get('fine') else None
+        max_days_to_pay_past_due = dictionary.get('max_days_to_pay_past_due')
+
+        # Return an object of this model
+        return cls(statement_descriptor,
+                   acquirer_name,
+                   acquirer_affiliation_code,
+                   acquirer_tid,
+                   acquirer_nsu,
+                   acquirer_auth_code,
+                   operation_type,
+                   card,
+                   acquirer_message,
+                   acquirer_return_code,
+                   mpi,
+                   eci,
+                   authentication_type,
+                   threed_authentication_url,
+                   gateway_id,
+                   amount,
+                   status,
+                   success,
+                   created_at,
+                   updated_at,
+                   attempt_count,
+                   max_attempts,
+                   splits,
+                   id,
+                   gateway_response,
+                   antifraud_response,
+                   split,
+                   funding_source,
+                   next_attempt,
+                   transaction_type,
+                   metadata,
+                   interest,
+                   fine,
+                   max_days_to_pay_past_due)
+
+
+class GetPrivateLabelTransactionResponse(GetTransactionResponse):
+
+    """Implementation of the 'GetPrivateLabelTransactionResponse' model.
+
+    Response object for getting a private label transaction
+    NOTE: This class inherits from 'GetTransactionResponse'.
+
+    Attributes:
+        statement_descriptor (string): Text that will appear on the credit
+            card's statement
+        acquirer_name (string): Acquirer name
+        acquirer_affiliation_code (string): Aquirer affiliation code
+        acquirer_tid (string): Acquirer TID
+        acquirer_nsu (string): Acquirer NSU
+        acquirer_auth_code (string): Acquirer authorization code
+        operation_type (string): Operation type
+        card (GetCardResponse): Response object for getting a credit card
+        acquirer_message (string): Acquirer message
+        acquirer_return_code (string): Acquirer Return Code
+        installments (int): Number of installments
+
+    """
+
+    # Create a mapping from Model property names to API property names
+    _names = {
+        "statement_descriptor":'statement_descriptor',
+        "acquirer_name":'acquirer_name',
+        "acquirer_affiliation_code":'acquirer_affiliation_code',
+        "acquirer_tid":'acquirer_tid',
+        "acquirer_nsu":'acquirer_nsu',
+        "acquirer_auth_code":'acquirer_auth_code',
+        "operation_type":'operation_type',
+        "card":'card',
+        "acquirer_message":'acquirer_message',
+        "acquirer_return_code":'acquirer_return_code',
+        "gateway_id":'gateway_id',
+        "amount":'amount',
+        "status":'status',
+        "success":'success',
+        "created_at":'created_at',
+        "updated_at":'updated_at',
+        "attempt_count":'attempt_count',
+        "max_attempts":'max_attempts',
+        "splits":'splits',
+        "id":'id',
+        "gateway_response":'gateway_response',
+        "antifraud_response":'antifraud_response',
+        "split":'split',
+        "installments":'installments',
+        "next_attempt":'next_attempt',
+        "transaction_type":'transaction_type',
+        "metadata":'metadata',
+        "interest":'interest',
+        "fine":'fine',
+        "max_days_to_pay_past_due":'max_days_to_pay_past_due'
+    }
+
+    def __init__(self,
+                 statement_descriptor=None,
+                 acquirer_name=None,
+                 acquirer_affiliation_code=None,
+                 acquirer_tid=None,
+                 acquirer_nsu=None,
+                 acquirer_auth_code=None,
+                 operation_type=None,
+                 card=None,
+                 acquirer_message=None,
+                 acquirer_return_code=None,
+                 gateway_id=None,
+                 amount=None,
+                 status=None,
+                 success=None,
+                 created_at=None,
+                 updated_at=None,
+                 attempt_count=None,
+                 max_attempts=None,
+                 splits=None,
+                 id=None,
+                 gateway_response=None,
+                 antifraud_response=None,
+                 split=None,
+                 installments=None,
+                 next_attempt=None,
+                 transaction_type=None,
+                 metadata=None,
+                 interest=None,
+                 fine=None,
+                 max_days_to_pay_past_due=None):
+        """Constructor for the GetPrivateLabelTransactionResponse class"""
+
+        # Initialize members of the class
+        self.statement_descriptor = statement_descriptor
+        self.acquirer_name = acquirer_name
+        self.acquirer_affiliation_code = acquirer_affiliation_code
+        self.acquirer_tid = acquirer_tid
+        self.acquirer_nsu = acquirer_nsu
+        self.acquirer_auth_code = acquirer_auth_code
+        self.operation_type = operation_type
+        self.card = card
+        self.acquirer_message = acquirer_message
+        self.acquirer_return_code = acquirer_return_code
+        self.installments = installments
+
+        # Call the constructor for the base class
+        super(GetPrivateLabelTransactionResponse, self).__init__(gateway_id,
+                                                                 amount,
+                                                                 status,
+                                                                 success,
+                                                                 created_at,
+                                                                 updated_at,
+                                                                 attempt_count,
+                                                                 max_attempts,
+                                                                 splits,
+                                                                 id,
+                                                                 gateway_response,
+                                                                 antifraud_response,
+                                                                 split,
+                                                                 next_attempt,
+                                                                 transaction_type,
+                                                                 metadata,
+                                                                 interest,
+                                                                 fine,
+                                                                 max_days_to_pay_past_due)
+
+
+    @classmethod
+    def from_dictionary(cls,
+                        dictionary):
+        """Creates an instance of this model from a dictionary
+
+        Args:
+            dictionary (dictionary): A dictionary representation of the object as
+            obtained from the deserialization of the server's response. The keys
+            MUST match property names in the API description.
+
+        Returns:
+            object: An instance of this structure class.
+
+        """
+        if dictionary is None:
+            return None
+
+        # Extract variables from the dictionary
+        statement_descriptor = dictionary.get('statement_descriptor')
+        acquirer_name = dictionary.get('acquirer_name')
+        acquirer_affiliation_code = dictionary.get('acquirer_affiliation_code')
+        acquirer_tid = dictionary.get('acquirer_tid')
+        acquirer_nsu = dictionary.get('acquirer_nsu')
+        acquirer_auth_code = dictionary.get('acquirer_auth_code')
+        operation_type = dictionary.get('operation_type')
+        card = pagarmecoreapi.models.get_card_response.GetCardResponse.from_dictionary(dictionary.get('card')) if dictionary.get('card') else None
+        acquirer_message = dictionary.get('acquirer_message')
+        acquirer_return_code = dictionary.get('acquirer_return_code')
+        gateway_id = dictionary.get('gateway_id')
+        amount = dictionary.get('amount')
+        status = dictionary.get('status')
+        success = dictionary.get('success')
+        created_at = APIHelper.RFC3339DateTime.from_value(dictionary.get("created_at")).datetime if dictionary.get("created_at") else None
+        updated_at = APIHelper.RFC3339DateTime.from_value(dictionary.get("updated_at")).datetime if dictionary.get("updated_at") else None
+        attempt_count = dictionary.get('attempt_count')
+        max_attempts = dictionary.get('max_attempts')
+        splits = None
+        if dictionary.get('splits') != None:
+            splits = list()
+            for structure in dictionary.get('splits'):
+                splits.append(pagarmecoreapi.models.get_split_response.GetSplitResponse.from_dictionary(structure))
+        id = dictionary.get('id')
+        gateway_response = pagarmecoreapi.models.get_gateway_response_response.GetGatewayResponseResponse.from_dictionary(dictionary.get('gateway_response')) if dictionary.get('gateway_response') else None
+        antifraud_response = pagarmecoreapi.models.get_antifraud_response.GetAntifraudResponse.from_dictionary(dictionary.get('antifraud_response')) if dictionary.get('antifraud_response') else None
+        split = None
+        if dictionary.get('split') != None:
+            split = list()
+            for structure in dictionary.get('split'):
+                split.append(pagarmecoreapi.models.get_split_response.GetSplitResponse.from_dictionary(structure))
+        installments = dictionary.get('installments')
+        next_attempt = APIHelper.RFC3339DateTime.from_value(dictionary.get("next_attempt")).datetime if dictionary.get("next_attempt") else None
+        transaction_type = dictionary.get('transaction_type')
+        metadata = dictionary.get('metadata')
+        interest = pagarmecoreapi.models.get_interest_response.GetInterestResponse.from_dictionary(dictionary.get('interest')) if dictionary.get('interest') else None
+        fine = pagarmecoreapi.models.get_fine_response.GetFineResponse.from_dictionary(dictionary.get('fine')) if dictionary.get('fine') else None
+        max_days_to_pay_past_due = dictionary.get('max_days_to_pay_past_due')
+
+        # Return an object of this model
+        return cls(statement_descriptor,
+                   acquirer_name,
+                   acquirer_affiliation_code,
+                   acquirer_tid,
+                   acquirer_nsu,
+                   acquirer_auth_code,
+                   operation_type,
+                   card,
+                   acquirer_message,
+                   acquirer_return_code,
+                   gateway_id,
+                   amount,
+                   status,
+                   success,
+                   created_at,
+                   updated_at,
+                   attempt_count,
+                   max_attempts,
+                   splits,
+                   id,
+                   gateway_response,
+                   antifraud_response,
+                   split,
+                   installments,
+                   next_attempt,
+                   transaction_type,
+                   metadata,
+                   interest,
+                   fine,
+                   max_days_to_pay_past_due)
+
+
+class GetCashTransactionResponse(GetTransactionResponse):
+
+    """Implementation of the 'GetCashTransactionResponse' model.
+
+    Response object for getting a cash transaction
+    NOTE: This class inherits from 'GetTransactionResponse'.
+
+    Attributes:
+        description (string): Description
+
+    """
+
+    # Create a mapping from Model property names to API property names
+    _names = {
+        "description":'description',
+        "gateway_id":'gateway_id',
+        "amount":'amount',
+        "status":'status',
+        "success":'success',
+        "created_at":'created_at',
+        "updated_at":'updated_at',
+        "attempt_count":'attempt_count',
+        "max_attempts":'max_attempts',
+        "splits":'splits',
+        "id":'id',
+        "gateway_response":'gateway_response',
+        "antifraud_response":'antifraud_response',
+        "split":'split',
+        "next_attempt":'next_attempt',
+        "transaction_type":'transaction_type',
+        "metadata":'metadata',
+        "interest":'interest',
+        "fine":'fine',
+        "max_days_to_pay_past_due":'max_days_to_pay_past_due'
+    }
+
+    def __init__(self,
+                 description=None,
+                 gateway_id=None,
+                 amount=None,
+                 status=None,
+                 success=None,
+                 created_at=None,
+                 updated_at=None,
+                 attempt_count=None,
+                 max_attempts=None,
+                 splits=None,
+                 id=None,
+                 gateway_response=None,
+                 antifraud_response=None,
+                 split=None,
+                 next_attempt=None,
+                 transaction_type=None,
+                 metadata=None,
+                 interest=None,
+                 fine=None,
+                 max_days_to_pay_past_due=None):
+        """Constructor for the GetCashTransactionResponse class"""
+
+        # Initialize members of the class
+        self.description = description
+
+        # Call the constructor for the base class
+        super(GetCashTransactionResponse, self).__init__(gateway_id,
+                                                         amount,
+                                                         status,
+                                                         success,
+                                                         created_at,
+                                                         updated_at,
+                                                         attempt_count,
+                                                         max_attempts,
+                                                         splits,
+                                                         id,
+                                                         gateway_response,
+                                                         antifraud_response,
+                                                         split,
+                                                         next_attempt,
+                                                         transaction_type,
+                                                         metadata,
+                                                         interest,
+                                                         fine,
+                                                         max_days_to_pay_past_due)
+
+
+    @classmethod
+    def from_dictionary(cls,
+                        dictionary):
+        """Creates an instance of this model from a dictionary
+
+        Args:
+            dictionary (dictionary): A dictionary representation of the object as
+            obtained from the deserialization of the server's response. The keys
+            MUST match property names in the API description.
+
+        Returns:
+            object: An instance of this structure class.
+
+        """
+        if dictionary is None:
+            return None
+
+        # Extract variables from the dictionary
+        description = dictionary.get('description')
+        gateway_id = dictionary.get('gateway_id')
+        amount = dictionary.get('amount')
+        status = dictionary.get('status')
+        success = dictionary.get('success')
+        created_at = APIHelper.RFC3339DateTime.from_value(dictionary.get("created_at")).datetime if dictionary.get("created_at") else None
+        updated_at = APIHelper.RFC3339DateTime.from_value(dictionary.get("updated_at")).datetime if dictionary.get("updated_at") else None
+        attempt_count = dictionary.get('attempt_count')
+        max_attempts = dictionary.get('max_attempts')
+        splits = None
+        if dictionary.get('splits') != None:
+            splits = list()
+            for structure in dictionary.get('splits'):
+                splits.append(pagarmecoreapi.models.get_split_response.GetSplitResponse.from_dictionary(structure))
+        id = dictionary.get('id')
+        gateway_response = pagarmecoreapi.models.get_gateway_response_response.GetGatewayResponseResponse.from_dictionary(dictionary.get('gateway_response')) if dictionary.get('gateway_response') else None
+        antifraud_response = pagarmecoreapi.models.get_antifraud_response.GetAntifraudResponse.from_dictionary(dictionary.get('antifraud_response')) if dictionary.get('antifraud_response') else None
+        split = None
+        if dictionary.get('split') != None:
+            split = list()
+            for structure in dictionary.get('split'):
+                split.append(pagarmecoreapi.models.get_split_response.GetSplitResponse.from_dictionary(structure))
+        next_attempt = APIHelper.RFC3339DateTime.from_value(dictionary.get("next_attempt")).datetime if dictionary.get("next_attempt") else None
+        transaction_type = dictionary.get('transaction_type')
+        metadata = dictionary.get('metadata')
+        interest = pagarmecoreapi.models.get_interest_response.GetInterestResponse.from_dictionary(dictionary.get('interest')) if dictionary.get('interest') else None
+        fine = pagarmecoreapi.models.get_fine_response.GetFineResponse.from_dictionary(dictionary.get('fine')) if dictionary.get('fine') else None
+        max_days_to_pay_past_due = dictionary.get('max_days_to_pay_past_due')
+
+        # Return an object of this model
+        return cls(description,
+                   gateway_id,
+                   amount,
+                   status,
+                   success,
+                   created_at,
+                   updated_at,
+                   attempt_count,
+                   max_attempts,
+                   splits,
+                   id,
+                   gateway_response,
+                   antifraud_response,
+                   split,
+                   next_attempt,
+                   transaction_type,
+                   metadata,
+                   interest,
+                   fine,
+                   max_days_to_pay_past_due)
 
 
 class GetBoletoTransactionResponse(GetTransactionResponse):
@@ -708,8 +1383,8 @@ class GetBoletoTransactionResponse(GetTransactionResponse):
         bank (string): TODO: type description here.
         document_number (string): TODO: type description here.
         instructions (string): TODO: type description here.
-        billing_address (GetBillingAddressResponse): TODO: type description
-            here.
+        billing_address (GetBillingAddressResponse): Response object for
+            getting a billing address
         due_at (datetime): TODO: type description here.
         qr_code (string): TODO: type description here.
         line (string): TODO: type description here.
@@ -757,7 +1432,10 @@ class GetBoletoTransactionResponse(GetTransactionResponse):
         "credit_at":'credit_at',
         "next_attempt":'next_attempt',
         "transaction_type":'transaction_type',
-        "metadata":'metadata'
+        "metadata":'metadata',
+        "interest":'interest',
+        "fine":'fine',
+        "max_days_to_pay_past_due":'max_days_to_pay_past_due'
     }
 
     def __init__(self,
@@ -793,7 +1471,10 @@ class GetBoletoTransactionResponse(GetTransactionResponse):
                  credit_at=None,
                  next_attempt=None,
                  transaction_type=None,
-                 metadata=None):
+                 metadata=None,
+                 interest=None,
+                 fine=None,
+                 max_days_to_pay_past_due=None):
         """Constructor for the GetBoletoTransactionResponse class"""
 
         # Initialize members of the class
@@ -831,7 +1512,10 @@ class GetBoletoTransactionResponse(GetTransactionResponse):
                                                            split,
                                                            next_attempt,
                                                            transaction_type,
-                                                           metadata)
+                                                           metadata,
+                                                           interest,
+                                                           fine,
+                                                           max_days_to_pay_past_due)
 
 
     @classmethod
@@ -893,6 +1577,9 @@ class GetBoletoTransactionResponse(GetTransactionResponse):
         next_attempt = APIHelper.RFC3339DateTime.from_value(dictionary.get("next_attempt")).datetime if dictionary.get("next_attempt") else None
         transaction_type = dictionary.get('transaction_type')
         metadata = dictionary.get('metadata')
+        interest = pagarmecoreapi.models.get_interest_response.GetInterestResponse.from_dictionary(dictionary.get('interest')) if dictionary.get('interest') else None
+        fine = pagarmecoreapi.models.get_fine_response.GetFineResponse.from_dictionary(dictionary.get('fine')) if dictionary.get('fine') else None
+        max_days_to_pay_past_due = dictionary.get('max_days_to_pay_past_due')
 
         # Return an object of this model
         return cls(url,
@@ -927,770 +1614,10 @@ class GetBoletoTransactionResponse(GetTransactionResponse):
                    credit_at,
                    next_attempt,
                    transaction_type,
-                   metadata)
-
-
-class GetDebitCardTransactionResponse(GetTransactionResponse):
-
-    """Implementation of the 'GetDebitCardTransactionResponse' model.
-
-    Response object for getting a debit card transaction
-    NOTE: This class inherits from 'GetTransactionResponse'.
-
-    Attributes:
-        statement_descriptor (string): Text that will appear on the debit
-            card's statement
-        acquirer_name (string): Acquirer name
-        acquirer_affiliation_code (string): Aquirer affiliation code
-        acquirer_tid (string): Acquirer TID
-        acquirer_nsu (string): Acquirer NSU
-        acquirer_auth_code (string): Acquirer authorization code
-        operation_type (string): Operation type
-        card (GetCardResponse): Card data
-        acquirer_message (string): Acquirer message
-        acquirer_return_code (string): Acquirer Return Code
-        mpi (string): Merchant Plugin
-        eci (string): Electronic Commerce Indicator (ECI)
-        authentication_type (string): Authentication type
-        threed_authentication_url (string): 3D-S Authentication Url
-
-    """
-
-    # Create a mapping from Model property names to API property names
-    _names = {
-        "statement_descriptor":'statement_descriptor',
-        "acquirer_name":'acquirer_name',
-        "acquirer_affiliation_code":'acquirer_affiliation_code',
-        "acquirer_tid":'acquirer_tid',
-        "acquirer_nsu":'acquirer_nsu',
-        "acquirer_auth_code":'acquirer_auth_code',
-        "operation_type":'operation_type',
-        "card":'card',
-        "acquirer_message":'acquirer_message',
-        "acquirer_return_code":'acquirer_return_code',
-        "mpi":'mpi',
-        "eci":'eci',
-        "authentication_type":'authentication_type',
-        "threed_authentication_url":'threed_authentication_url',
-        "gateway_id":'gateway_id',
-        "amount":'amount',
-        "status":'status',
-        "success":'success',
-        "created_at":'created_at',
-        "updated_at":'updated_at',
-        "attempt_count":'attempt_count',
-        "max_attempts":'max_attempts',
-        "splits":'splits',
-        "id":'id',
-        "gateway_response":'gateway_response',
-        "antifraud_response":'antifraud_response',
-        "split":'split',
-        "next_attempt":'next_attempt',
-        "transaction_type":'transaction_type',
-        "metadata":'metadata'
-    }
-
-    def __init__(self,
-                 statement_descriptor=None,
-                 acquirer_name=None,
-                 acquirer_affiliation_code=None,
-                 acquirer_tid=None,
-                 acquirer_nsu=None,
-                 acquirer_auth_code=None,
-                 operation_type=None,
-                 card=None,
-                 acquirer_message=None,
-                 acquirer_return_code=None,
-                 mpi=None,
-                 eci=None,
-                 authentication_type=None,
-                 threed_authentication_url=None,
-                 gateway_id=None,
-                 amount=None,
-                 status=None,
-                 success=None,
-                 created_at=None,
-                 updated_at=None,
-                 attempt_count=None,
-                 max_attempts=None,
-                 splits=None,
-                 id=None,
-                 gateway_response=None,
-                 antifraud_response=None,
-                 split=None,
-                 next_attempt=None,
-                 transaction_type=None,
-                 metadata=None):
-        """Constructor for the GetDebitCardTransactionResponse class"""
-
-        # Initialize members of the class
-        self.statement_descriptor = statement_descriptor
-        self.acquirer_name = acquirer_name
-        self.acquirer_affiliation_code = acquirer_affiliation_code
-        self.acquirer_tid = acquirer_tid
-        self.acquirer_nsu = acquirer_nsu
-        self.acquirer_auth_code = acquirer_auth_code
-        self.operation_type = operation_type
-        self.card = card
-        self.acquirer_message = acquirer_message
-        self.acquirer_return_code = acquirer_return_code
-        self.mpi = mpi
-        self.eci = eci
-        self.authentication_type = authentication_type
-        self.threed_authentication_url = threed_authentication_url
-
-        # Call the constructor for the base class
-        super(GetDebitCardTransactionResponse, self).__init__(gateway_id,
-                                                              amount,
-                                                              status,
-                                                              success,
-                                                              created_at,
-                                                              updated_at,
-                                                              attempt_count,
-                                                              max_attempts,
-                                                              splits,
-                                                              id,
-                                                              gateway_response,
-                                                              antifraud_response,
-                                                              split,
-                                                              next_attempt,
-                                                              transaction_type,
-                                                              metadata)
-
-
-    @classmethod
-    def from_dictionary(cls,
-                        dictionary):
-        """Creates an instance of this model from a dictionary
-
-        Args:
-            dictionary (dictionary): A dictionary representation of the object as
-            obtained from the deserialization of the server's response. The keys
-            MUST match property names in the API description.
-
-        Returns:
-            object: An instance of this structure class.
-
-        """
-        if dictionary is None:
-            return None
-
-        # Extract variables from the dictionary
-        statement_descriptor = dictionary.get('statement_descriptor')
-        acquirer_name = dictionary.get('acquirer_name')
-        acquirer_affiliation_code = dictionary.get('acquirer_affiliation_code')
-        acquirer_tid = dictionary.get('acquirer_tid')
-        acquirer_nsu = dictionary.get('acquirer_nsu')
-        acquirer_auth_code = dictionary.get('acquirer_auth_code')
-        operation_type = dictionary.get('operation_type')
-        card = pagarmecoreapi.models.get_card_response.GetCardResponse.from_dictionary(dictionary.get('card')) if dictionary.get('card') else None
-        acquirer_message = dictionary.get('acquirer_message')
-        acquirer_return_code = dictionary.get('acquirer_return_code')
-        mpi = dictionary.get('mpi')
-        eci = dictionary.get('eci')
-        authentication_type = dictionary.get('authentication_type')
-        threed_authentication_url = dictionary.get('threed_authentication_url')
-        gateway_id = dictionary.get('gateway_id')
-        amount = dictionary.get('amount')
-        status = dictionary.get('status')
-        success = dictionary.get('success')
-        created_at = APIHelper.RFC3339DateTime.from_value(dictionary.get("created_at")).datetime if dictionary.get("created_at") else None
-        updated_at = APIHelper.RFC3339DateTime.from_value(dictionary.get("updated_at")).datetime if dictionary.get("updated_at") else None
-        attempt_count = dictionary.get('attempt_count')
-        max_attempts = dictionary.get('max_attempts')
-        splits = None
-        if dictionary.get('splits') != None:
-            splits = list()
-            for structure in dictionary.get('splits'):
-                splits.append(pagarmecoreapi.models.get_split_response.GetSplitResponse.from_dictionary(structure))
-        id = dictionary.get('id')
-        gateway_response = pagarmecoreapi.models.get_gateway_response_response.GetGatewayResponseResponse.from_dictionary(dictionary.get('gateway_response')) if dictionary.get('gateway_response') else None
-        antifraud_response = pagarmecoreapi.models.get_antifraud_response.GetAntifraudResponse.from_dictionary(dictionary.get('antifraud_response')) if dictionary.get('antifraud_response') else None
-        split = None
-        if dictionary.get('split') != None:
-            split = list()
-            for structure in dictionary.get('split'):
-                split.append(pagarmecoreapi.models.get_split_response.GetSplitResponse.from_dictionary(structure))
-        next_attempt = APIHelper.RFC3339DateTime.from_value(dictionary.get("next_attempt")).datetime if dictionary.get("next_attempt") else None
-        transaction_type = dictionary.get('transaction_type')
-        metadata = dictionary.get('metadata')
-
-        # Return an object of this model
-        return cls(statement_descriptor,
-                   acquirer_name,
-                   acquirer_affiliation_code,
-                   acquirer_tid,
-                   acquirer_nsu,
-                   acquirer_auth_code,
-                   operation_type,
-                   card,
-                   acquirer_message,
-                   acquirer_return_code,
-                   mpi,
-                   eci,
-                   authentication_type,
-                   threed_authentication_url,
-                   gateway_id,
-                   amount,
-                   status,
-                   success,
-                   created_at,
-                   updated_at,
-                   attempt_count,
-                   max_attempts,
-                   splits,
-                   id,
-                   gateway_response,
-                   antifraud_response,
-                   split,
-                   next_attempt,
-                   transaction_type,
-                   metadata)
-
-
-class GetPrivateLabelTransactionResponse(GetTransactionResponse):
-
-    """Implementation of the 'GetPrivateLabelTransactionResponse' model.
-
-    Response object for getting a private label transaction
-    NOTE: This class inherits from 'GetTransactionResponse'.
-
-    Attributes:
-        statement_descriptor (string): Text that will appear on the credit
-            card's statement
-        acquirer_name (string): Acquirer name
-        acquirer_affiliation_code (string): Aquirer affiliation code
-        acquirer_tid (string): Acquirer TID
-        acquirer_nsu (string): Acquirer NSU
-        acquirer_auth_code (string): Acquirer authorization code
-        operation_type (string): Operation type
-        card (GetCardResponse): Card data
-        acquirer_message (string): Acquirer message
-        acquirer_return_code (string): Acquirer Return Code
-        installments (int): Number of installments
-
-    """
-
-    # Create a mapping from Model property names to API property names
-    _names = {
-        "statement_descriptor":'statement_descriptor',
-        "acquirer_name":'acquirer_name',
-        "acquirer_affiliation_code":'acquirer_affiliation_code',
-        "acquirer_tid":'acquirer_tid',
-        "acquirer_nsu":'acquirer_nsu',
-        "acquirer_auth_code":'acquirer_auth_code',
-        "operation_type":'operation_type',
-        "card":'card',
-        "acquirer_message":'acquirer_message',
-        "acquirer_return_code":'acquirer_return_code',
-        "gateway_id":'gateway_id',
-        "amount":'amount',
-        "status":'status',
-        "success":'success',
-        "created_at":'created_at',
-        "updated_at":'updated_at',
-        "attempt_count":'attempt_count',
-        "max_attempts":'max_attempts',
-        "splits":'splits',
-        "id":'id',
-        "gateway_response":'gateway_response',
-        "antifraud_response":'antifraud_response',
-        "split":'split',
-        "installments":'installments',
-        "next_attempt":'next_attempt',
-        "transaction_type":'transaction_type',
-        "metadata":'metadata'
-    }
-
-    def __init__(self,
-                 statement_descriptor=None,
-                 acquirer_name=None,
-                 acquirer_affiliation_code=None,
-                 acquirer_tid=None,
-                 acquirer_nsu=None,
-                 acquirer_auth_code=None,
-                 operation_type=None,
-                 card=None,
-                 acquirer_message=None,
-                 acquirer_return_code=None,
-                 gateway_id=None,
-                 amount=None,
-                 status=None,
-                 success=None,
-                 created_at=None,
-                 updated_at=None,
-                 attempt_count=None,
-                 max_attempts=None,
-                 splits=None,
-                 id=None,
-                 gateway_response=None,
-                 antifraud_response=None,
-                 split=None,
-                 installments=None,
-                 next_attempt=None,
-                 transaction_type=None,
-                 metadata=None):
-        """Constructor for the GetPrivateLabelTransactionResponse class"""
-
-        # Initialize members of the class
-        self.statement_descriptor = statement_descriptor
-        self.acquirer_name = acquirer_name
-        self.acquirer_affiliation_code = acquirer_affiliation_code
-        self.acquirer_tid = acquirer_tid
-        self.acquirer_nsu = acquirer_nsu
-        self.acquirer_auth_code = acquirer_auth_code
-        self.operation_type = operation_type
-        self.card = card
-        self.acquirer_message = acquirer_message
-        self.acquirer_return_code = acquirer_return_code
-        self.installments = installments
-
-        # Call the constructor for the base class
-        super(GetPrivateLabelTransactionResponse, self).__init__(gateway_id,
-                                                                 amount,
-                                                                 status,
-                                                                 success,
-                                                                 created_at,
-                                                                 updated_at,
-                                                                 attempt_count,
-                                                                 max_attempts,
-                                                                 splits,
-                                                                 id,
-                                                                 gateway_response,
-                                                                 antifraud_response,
-                                                                 split,
-                                                                 next_attempt,
-                                                                 transaction_type,
-                                                                 metadata)
-
-
-    @classmethod
-    def from_dictionary(cls,
-                        dictionary):
-        """Creates an instance of this model from a dictionary
-
-        Args:
-            dictionary (dictionary): A dictionary representation of the object as
-            obtained from the deserialization of the server's response. The keys
-            MUST match property names in the API description.
-
-        Returns:
-            object: An instance of this structure class.
-
-        """
-        if dictionary is None:
-            return None
-
-        # Extract variables from the dictionary
-        statement_descriptor = dictionary.get('statement_descriptor')
-        acquirer_name = dictionary.get('acquirer_name')
-        acquirer_affiliation_code = dictionary.get('acquirer_affiliation_code')
-        acquirer_tid = dictionary.get('acquirer_tid')
-        acquirer_nsu = dictionary.get('acquirer_nsu')
-        acquirer_auth_code = dictionary.get('acquirer_auth_code')
-        operation_type = dictionary.get('operation_type')
-        card = pagarmecoreapi.models.get_card_response.GetCardResponse.from_dictionary(dictionary.get('card')) if dictionary.get('card') else None
-        acquirer_message = dictionary.get('acquirer_message')
-        acquirer_return_code = dictionary.get('acquirer_return_code')
-        gateway_id = dictionary.get('gateway_id')
-        amount = dictionary.get('amount')
-        status = dictionary.get('status')
-        success = dictionary.get('success')
-        created_at = APIHelper.RFC3339DateTime.from_value(dictionary.get("created_at")).datetime if dictionary.get("created_at") else None
-        updated_at = APIHelper.RFC3339DateTime.from_value(dictionary.get("updated_at")).datetime if dictionary.get("updated_at") else None
-        attempt_count = dictionary.get('attempt_count')
-        max_attempts = dictionary.get('max_attempts')
-        splits = None
-        if dictionary.get('splits') != None:
-            splits = list()
-            for structure in dictionary.get('splits'):
-                splits.append(pagarmecoreapi.models.get_split_response.GetSplitResponse.from_dictionary(structure))
-        id = dictionary.get('id')
-        gateway_response = pagarmecoreapi.models.get_gateway_response_response.GetGatewayResponseResponse.from_dictionary(dictionary.get('gateway_response')) if dictionary.get('gateway_response') else None
-        antifraud_response = pagarmecoreapi.models.get_antifraud_response.GetAntifraudResponse.from_dictionary(dictionary.get('antifraud_response')) if dictionary.get('antifraud_response') else None
-        split = None
-        if dictionary.get('split') != None:
-            split = list()
-            for structure in dictionary.get('split'):
-                split.append(pagarmecoreapi.models.get_split_response.GetSplitResponse.from_dictionary(structure))
-        installments = dictionary.get('installments')
-        next_attempt = APIHelper.RFC3339DateTime.from_value(dictionary.get("next_attempt")).datetime if dictionary.get("next_attempt") else None
-        transaction_type = dictionary.get('transaction_type')
-        metadata = dictionary.get('metadata')
-
-        # Return an object of this model
-        return cls(statement_descriptor,
-                   acquirer_name,
-                   acquirer_affiliation_code,
-                   acquirer_tid,
-                   acquirer_nsu,
-                   acquirer_auth_code,
-                   operation_type,
-                   card,
-                   acquirer_message,
-                   acquirer_return_code,
-                   gateway_id,
-                   amount,
-                   status,
-                   success,
-                   created_at,
-                   updated_at,
-                   attempt_count,
-                   max_attempts,
-                   splits,
-                   id,
-                   gateway_response,
-                   antifraud_response,
-                   split,
-                   installments,
-                   next_attempt,
-                   transaction_type,
-                   metadata)
-
-
-class GetCashTransactionResponse(GetTransactionResponse):
-
-    """Implementation of the 'GetCashTransactionResponse' model.
-
-    Response object for getting a cash transaction
-    NOTE: This class inherits from 'GetTransactionResponse'.
-
-    Attributes:
-        description (string): Description
-
-    """
-
-    # Create a mapping from Model property names to API property names
-    _names = {
-        "description":'description',
-        "gateway_id":'gateway_id',
-        "amount":'amount',
-        "status":'status',
-        "success":'success',
-        "created_at":'created_at',
-        "updated_at":'updated_at',
-        "attempt_count":'attempt_count',
-        "max_attempts":'max_attempts',
-        "splits":'splits',
-        "id":'id',
-        "gateway_response":'gateway_response',
-        "antifraud_response":'antifraud_response',
-        "split":'split',
-        "next_attempt":'next_attempt',
-        "transaction_type":'transaction_type',
-        "metadata":'metadata'
-    }
-
-    def __init__(self,
-                 description=None,
-                 gateway_id=None,
-                 amount=None,
-                 status=None,
-                 success=None,
-                 created_at=None,
-                 updated_at=None,
-                 attempt_count=None,
-                 max_attempts=None,
-                 splits=None,
-                 id=None,
-                 gateway_response=None,
-                 antifraud_response=None,
-                 split=None,
-                 next_attempt=None,
-                 transaction_type=None,
-                 metadata=None):
-        """Constructor for the GetCashTransactionResponse class"""
-
-        # Initialize members of the class
-        self.description = description
-
-        # Call the constructor for the base class
-        super(GetCashTransactionResponse, self).__init__(gateway_id,
-                                                         amount,
-                                                         status,
-                                                         success,
-                                                         created_at,
-                                                         updated_at,
-                                                         attempt_count,
-                                                         max_attempts,
-                                                         splits,
-                                                         id,
-                                                         gateway_response,
-                                                         antifraud_response,
-                                                         split,
-                                                         next_attempt,
-                                                         transaction_type,
-                                                         metadata)
-
-
-    @classmethod
-    def from_dictionary(cls,
-                        dictionary):
-        """Creates an instance of this model from a dictionary
-
-        Args:
-            dictionary (dictionary): A dictionary representation of the object as
-            obtained from the deserialization of the server's response. The keys
-            MUST match property names in the API description.
-
-        Returns:
-            object: An instance of this structure class.
-
-        """
-        if dictionary is None:
-            return None
-
-        # Extract variables from the dictionary
-        description = dictionary.get('description')
-        gateway_id = dictionary.get('gateway_id')
-        amount = dictionary.get('amount')
-        status = dictionary.get('status')
-        success = dictionary.get('success')
-        created_at = APIHelper.RFC3339DateTime.from_value(dictionary.get("created_at")).datetime if dictionary.get("created_at") else None
-        updated_at = APIHelper.RFC3339DateTime.from_value(dictionary.get("updated_at")).datetime if dictionary.get("updated_at") else None
-        attempt_count = dictionary.get('attempt_count')
-        max_attempts = dictionary.get('max_attempts')
-        splits = None
-        if dictionary.get('splits') != None:
-            splits = list()
-            for structure in dictionary.get('splits'):
-                splits.append(pagarmecoreapi.models.get_split_response.GetSplitResponse.from_dictionary(structure))
-        id = dictionary.get('id')
-        gateway_response = pagarmecoreapi.models.get_gateway_response_response.GetGatewayResponseResponse.from_dictionary(dictionary.get('gateway_response')) if dictionary.get('gateway_response') else None
-        antifraud_response = pagarmecoreapi.models.get_antifraud_response.GetAntifraudResponse.from_dictionary(dictionary.get('antifraud_response')) if dictionary.get('antifraud_response') else None
-        split = None
-        if dictionary.get('split') != None:
-            split = list()
-            for structure in dictionary.get('split'):
-                split.append(pagarmecoreapi.models.get_split_response.GetSplitResponse.from_dictionary(structure))
-        next_attempt = APIHelper.RFC3339DateTime.from_value(dictionary.get("next_attempt")).datetime if dictionary.get("next_attempt") else None
-        transaction_type = dictionary.get('transaction_type')
-        metadata = dictionary.get('metadata')
-
-        # Return an object of this model
-        return cls(description,
-                   gateway_id,
-                   amount,
-                   status,
-                   success,
-                   created_at,
-                   updated_at,
-                   attempt_count,
-                   max_attempts,
-                   splits,
-                   id,
-                   gateway_response,
-                   antifraud_response,
-                   split,
-                   next_attempt,
-                   transaction_type,
-                   metadata)
-
-
-class GetCreditCardTransactionResponse(GetTransactionResponse):
-
-    """Implementation of the 'GetCreditCardTransactionResponse' model.
-
-    Response object for getting a credit card transaction
-    NOTE: This class inherits from 'GetTransactionResponse'.
-
-    Attributes:
-        statement_descriptor (string): Text that will appear on the credit
-            card's statement
-        acquirer_name (string): Acquirer name
-        acquirer_affiliation_code (string): Aquirer affiliation code
-        acquirer_tid (string): Acquirer TID
-        acquirer_nsu (string): Acquirer NSU
-        acquirer_auth_code (string): Acquirer authorization code
-        operation_type (string): Operation type
-        card (GetCardResponse): Card data
-        acquirer_message (string): Acquirer message
-        acquirer_return_code (string): Acquirer Return Code
-        installments (int): Number of installments
-        threed_authentication_url (string): 3D-S authentication Url
-
-    """
-
-    # Create a mapping from Model property names to API property names
-    _names = {
-        "statement_descriptor":'statement_descriptor',
-        "acquirer_name":'acquirer_name',
-        "acquirer_affiliation_code":'acquirer_affiliation_code',
-        "acquirer_tid":'acquirer_tid',
-        "acquirer_nsu":'acquirer_nsu',
-        "acquirer_auth_code":'acquirer_auth_code',
-        "operation_type":'operation_type',
-        "card":'card',
-        "acquirer_message":'acquirer_message',
-        "acquirer_return_code":'acquirer_return_code',
-        "threed_authentication_url":'threed_authentication_url',
-        "gateway_id":'gateway_id',
-        "amount":'amount',
-        "status":'status',
-        "success":'success',
-        "created_at":'created_at',
-        "updated_at":'updated_at',
-        "attempt_count":'attempt_count',
-        "max_attempts":'max_attempts',
-        "splits":'splits',
-        "id":'id',
-        "gateway_response":'gateway_response',
-        "antifraud_response":'antifraud_response',
-        "split":'split',
-        "installments":'installments',
-        "next_attempt":'next_attempt',
-        "transaction_type":'transaction_type',
-        "metadata":'metadata'
-    }
-
-    def __init__(self,
-                 statement_descriptor=None,
-                 acquirer_name=None,
-                 acquirer_affiliation_code=None,
-                 acquirer_tid=None,
-                 acquirer_nsu=None,
-                 acquirer_auth_code=None,
-                 operation_type=None,
-                 card=None,
-                 acquirer_message=None,
-                 acquirer_return_code=None,
-                 threed_authentication_url=None,
-                 gateway_id=None,
-                 amount=None,
-                 status=None,
-                 success=None,
-                 created_at=None,
-                 updated_at=None,
-                 attempt_count=None,
-                 max_attempts=None,
-                 splits=None,
-                 id=None,
-                 gateway_response=None,
-                 antifraud_response=None,
-                 split=None,
-                 installments=None,
-                 next_attempt=None,
-                 transaction_type=None,
-                 metadata=None):
-        """Constructor for the GetCreditCardTransactionResponse class"""
-
-        # Initialize members of the class
-        self.statement_descriptor = statement_descriptor
-        self.acquirer_name = acquirer_name
-        self.acquirer_affiliation_code = acquirer_affiliation_code
-        self.acquirer_tid = acquirer_tid
-        self.acquirer_nsu = acquirer_nsu
-        self.acquirer_auth_code = acquirer_auth_code
-        self.operation_type = operation_type
-        self.card = card
-        self.acquirer_message = acquirer_message
-        self.acquirer_return_code = acquirer_return_code
-        self.installments = installments
-        self.threed_authentication_url = threed_authentication_url
-
-        # Call the constructor for the base class
-        super(GetCreditCardTransactionResponse, self).__init__(gateway_id,
-                                                               amount,
-                                                               status,
-                                                               success,
-                                                               created_at,
-                                                               updated_at,
-                                                               attempt_count,
-                                                               max_attempts,
-                                                               splits,
-                                                               id,
-                                                               gateway_response,
-                                                               antifraud_response,
-                                                               split,
-                                                               next_attempt,
-                                                               transaction_type,
-                                                               metadata)
-
-
-    @classmethod
-    def from_dictionary(cls,
-                        dictionary):
-        """Creates an instance of this model from a dictionary
-
-        Args:
-            dictionary (dictionary): A dictionary representation of the object as
-            obtained from the deserialization of the server's response. The keys
-            MUST match property names in the API description.
-
-        Returns:
-            object: An instance of this structure class.
-
-        """
-        if dictionary is None:
-            return None
-
-        # Extract variables from the dictionary
-        statement_descriptor = dictionary.get('statement_descriptor')
-        acquirer_name = dictionary.get('acquirer_name')
-        acquirer_affiliation_code = dictionary.get('acquirer_affiliation_code')
-        acquirer_tid = dictionary.get('acquirer_tid')
-        acquirer_nsu = dictionary.get('acquirer_nsu')
-        acquirer_auth_code = dictionary.get('acquirer_auth_code')
-        operation_type = dictionary.get('operation_type')
-        card = pagarmecoreapi.models.get_card_response.GetCardResponse.from_dictionary(dictionary.get('card')) if dictionary.get('card') else None
-        acquirer_message = dictionary.get('acquirer_message')
-        acquirer_return_code = dictionary.get('acquirer_return_code')
-        threed_authentication_url = dictionary.get('threed_authentication_url')
-        gateway_id = dictionary.get('gateway_id')
-        amount = dictionary.get('amount')
-        status = dictionary.get('status')
-        success = dictionary.get('success')
-        created_at = APIHelper.RFC3339DateTime.from_value(dictionary.get("created_at")).datetime if dictionary.get("created_at") else None
-        updated_at = APIHelper.RFC3339DateTime.from_value(dictionary.get("updated_at")).datetime if dictionary.get("updated_at") else None
-        attempt_count = dictionary.get('attempt_count')
-        max_attempts = dictionary.get('max_attempts')
-        splits = None
-        if dictionary.get('splits') != None:
-            splits = list()
-            for structure in dictionary.get('splits'):
-                splits.append(pagarmecoreapi.models.get_split_response.GetSplitResponse.from_dictionary(structure))
-        id = dictionary.get('id')
-        gateway_response = pagarmecoreapi.models.get_gateway_response_response.GetGatewayResponseResponse.from_dictionary(dictionary.get('gateway_response')) if dictionary.get('gateway_response') else None
-        antifraud_response = pagarmecoreapi.models.get_antifraud_response.GetAntifraudResponse.from_dictionary(dictionary.get('antifraud_response')) if dictionary.get('antifraud_response') else None
-        split = None
-        if dictionary.get('split') != None:
-            split = list()
-            for structure in dictionary.get('split'):
-                split.append(pagarmecoreapi.models.get_split_response.GetSplitResponse.from_dictionary(structure))
-        installments = dictionary.get('installments')
-        next_attempt = APIHelper.RFC3339DateTime.from_value(dictionary.get("next_attempt")).datetime if dictionary.get("next_attempt") else None
-        transaction_type = dictionary.get('transaction_type')
-        metadata = dictionary.get('metadata')
-
-        # Return an object of this model
-        return cls(statement_descriptor,
-                   acquirer_name,
-                   acquirer_affiliation_code,
-                   acquirer_tid,
-                   acquirer_nsu,
-                   acquirer_auth_code,
-                   operation_type,
-                   card,
-                   acquirer_message,
-                   acquirer_return_code,
-                   threed_authentication_url,
-                   gateway_id,
-                   amount,
-                   status,
-                   success,
-                   created_at,
-                   updated_at,
-                   attempt_count,
-                   max_attempts,
-                   splits,
-                   id,
-                   gateway_response,
-                   antifraud_response,
-                   split,
-                   installments,
-                   next_attempt,
-                   transaction_type,
-                   metadata)
+                   metadata,
+                   interest,
+                   fine,
+                   max_days_to_pay_past_due)
 
 
 class GetPixTransactionResponse(GetTransactionResponse):
@@ -1707,7 +1634,8 @@ class GetPixTransactionResponse(GetTransactionResponse):
         additional_information (list of PixAdditionalInformation): TODO: type
             description here.
         end_to_end_id (string): TODO: type description here.
-        payer (GetPixPayerResponse): TODO: type description here.
+        payer (GetPixPayerResponse): Pix payer data.
+        pix_provider_tid (string): Pix provider TID
 
     """
 
@@ -1717,6 +1645,8 @@ class GetPixTransactionResponse(GetTransactionResponse):
         "qr_code_url":'qr_code_url',
         "expires_at":'expires_at',
         "additional_information":'additional_information',
+        "payer":'payer',
+        "pix_provider_tid":'pix_provider_tid',
         "gateway_id":'gateway_id',
         "amount":'amount',
         "status":'status',
@@ -1731,10 +1661,12 @@ class GetPixTransactionResponse(GetTransactionResponse):
         "antifraud_response":'antifraud_response',
         "split":'split',
         "end_to_end_id":'end_to_end_id',
-        "payer":'payer',
         "next_attempt":'next_attempt',
         "transaction_type":'transaction_type',
-        "metadata":'metadata'
+        "metadata":'metadata',
+        "interest":'interest',
+        "fine":'fine',
+        "max_days_to_pay_past_due":'max_days_to_pay_past_due'
     }
 
     def __init__(self,
@@ -1742,6 +1674,8 @@ class GetPixTransactionResponse(GetTransactionResponse):
                  qr_code_url=None,
                  expires_at=None,
                  additional_information=None,
+                 payer=None,
+                 pix_provider_tid=None,
                  gateway_id=None,
                  amount=None,
                  status=None,
@@ -1756,10 +1690,12 @@ class GetPixTransactionResponse(GetTransactionResponse):
                  antifraud_response=None,
                  split=None,
                  end_to_end_id=None,
-                 payer=None,
                  next_attempt=None,
                  transaction_type=None,
-                 metadata=None):
+                 metadata=None,
+                 interest=None,
+                 fine=None,
+                 max_days_to_pay_past_due=None):
         """Constructor for the GetPixTransactionResponse class"""
 
         # Initialize members of the class
@@ -1769,6 +1705,7 @@ class GetPixTransactionResponse(GetTransactionResponse):
         self.additional_information = additional_information
         self.end_to_end_id = end_to_end_id
         self.payer = payer
+        self.pix_provider_tid = pix_provider_tid
 
         # Call the constructor for the base class
         super(GetPixTransactionResponse, self).__init__(gateway_id,
@@ -1786,7 +1723,10 @@ class GetPixTransactionResponse(GetTransactionResponse):
                                                         split,
                                                         next_attempt,
                                                         transaction_type,
-                                                        metadata)
+                                                        metadata,
+                                                        interest,
+                                                        fine,
+                                                        max_days_to_pay_past_due)
 
 
     @classmethod
@@ -1815,6 +1755,8 @@ class GetPixTransactionResponse(GetTransactionResponse):
             additional_information = list()
             for structure in dictionary.get('additional_information'):
                 additional_information.append(pagarmecoreapi.models.pix_additional_information.PixAdditionalInformation.from_dictionary(structure))
+        payer = pagarmecoreapi.models.get_pix_payer_response.GetPixPayerResponse.from_dictionary(dictionary.get('payer')) if dictionary.get('payer') else None
+        pix_provider_tid = dictionary.get('pix_provider_tid')
         gateway_id = dictionary.get('gateway_id')
         amount = dictionary.get('amount')
         status = dictionary.get('status')
@@ -1837,16 +1779,20 @@ class GetPixTransactionResponse(GetTransactionResponse):
             for structure in dictionary.get('split'):
                 split.append(pagarmecoreapi.models.get_split_response.GetSplitResponse.from_dictionary(structure))
         end_to_end_id = dictionary.get('end_to_end_id')
-        payer = pagarmecoreapi.models.get_pix_payer_response.GetPixPayerResponse.from_dictionary(dictionary.get('payer')) if dictionary.get('payer') else None
         next_attempt = APIHelper.RFC3339DateTime.from_value(dictionary.get("next_attempt")).datetime if dictionary.get("next_attempt") else None
         transaction_type = dictionary.get('transaction_type')
         metadata = dictionary.get('metadata')
+        interest = pagarmecoreapi.models.get_interest_response.GetInterestResponse.from_dictionary(dictionary.get('interest')) if dictionary.get('interest') else None
+        fine = pagarmecoreapi.models.get_fine_response.GetFineResponse.from_dictionary(dictionary.get('fine')) if dictionary.get('fine') else None
+        max_days_to_pay_past_due = dictionary.get('max_days_to_pay_past_due')
 
         # Return an object of this model
         return cls(qr_code,
                    qr_code_url,
                    expires_at,
                    additional_information,
+                   payer,
+                   pix_provider_tid,
                    gateway_id,
                    amount,
                    status,
@@ -1861,9 +1807,239 @@ class GetPixTransactionResponse(GetTransactionResponse):
                    antifraud_response,
                    split,
                    end_to_end_id,
-                   payer,
                    next_attempt,
                    transaction_type,
-                   metadata)
+                   metadata,
+                   interest,
+                   fine,
+                   max_days_to_pay_past_due)
+
+
+class GetCreditCardTransactionResponse(GetTransactionResponse):
+
+    """Implementation of the 'GetCreditCardTransactionResponse' model.
+
+    Response object for getting a credit card transaction
+    NOTE: This class inherits from 'GetTransactionResponse'.
+
+    Attributes:
+        statement_descriptor (string): Text that will appear on the credit
+            card's statement
+        acquirer_name (string): Acquirer name
+        acquirer_affiliation_code (string): Aquirer affiliation code
+        acquirer_tid (string): Acquirer TID
+        acquirer_nsu (string): Acquirer NSU
+        acquirer_auth_code (string): Acquirer authorization code
+        operation_type (string): Operation type
+        card (GetCardResponse): Response object for getting a credit card
+        acquirer_message (string): Acquirer message
+        acquirer_return_code (string): Acquirer Return Code
+        installments (int): Number of installments
+        threed_authentication_url (string): 3D-S authentication Url
+        funding_source (string): Identify when a card is prepaid, credit or
+            debit.
+
+    """
+
+    # Create a mapping from Model property names to API property names
+    _names = {
+        "statement_descriptor":'statement_descriptor',
+        "acquirer_name":'acquirer_name',
+        "acquirer_affiliation_code":'acquirer_affiliation_code',
+        "acquirer_tid":'acquirer_tid',
+        "acquirer_nsu":'acquirer_nsu',
+        "acquirer_auth_code":'acquirer_auth_code',
+        "operation_type":'operation_type',
+        "card":'card',
+        "acquirer_message":'acquirer_message',
+        "acquirer_return_code":'acquirer_return_code',
+        "threed_authentication_url":'threed_authentication_url',
+        "gateway_id":'gateway_id',
+        "amount":'amount',
+        "status":'status',
+        "success":'success',
+        "created_at":'created_at',
+        "updated_at":'updated_at',
+        "attempt_count":'attempt_count',
+        "max_attempts":'max_attempts',
+        "splits":'splits',
+        "id":'id',
+        "gateway_response":'gateway_response',
+        "antifraud_response":'antifraud_response',
+        "split":'split',
+        "installments":'installments',
+        "funding_source":'funding_source',
+        "next_attempt":'next_attempt',
+        "transaction_type":'transaction_type',
+        "metadata":'metadata',
+        "interest":'interest',
+        "fine":'fine',
+        "max_days_to_pay_past_due":'max_days_to_pay_past_due'
+    }
+
+    def __init__(self,
+                 statement_descriptor=None,
+                 acquirer_name=None,
+                 acquirer_affiliation_code=None,
+                 acquirer_tid=None,
+                 acquirer_nsu=None,
+                 acquirer_auth_code=None,
+                 operation_type=None,
+                 card=None,
+                 acquirer_message=None,
+                 acquirer_return_code=None,
+                 threed_authentication_url=None,
+                 gateway_id=None,
+                 amount=None,
+                 status=None,
+                 success=None,
+                 created_at=None,
+                 updated_at=None,
+                 attempt_count=None,
+                 max_attempts=None,
+                 splits=None,
+                 id=None,
+                 gateway_response=None,
+                 antifraud_response=None,
+                 split=None,
+                 installments=None,
+                 funding_source=None,
+                 next_attempt=None,
+                 transaction_type=None,
+                 metadata=None,
+                 interest=None,
+                 fine=None,
+                 max_days_to_pay_past_due=None):
+        """Constructor for the GetCreditCardTransactionResponse class"""
+
+        # Initialize members of the class
+        self.statement_descriptor = statement_descriptor
+        self.acquirer_name = acquirer_name
+        self.acquirer_affiliation_code = acquirer_affiliation_code
+        self.acquirer_tid = acquirer_tid
+        self.acquirer_nsu = acquirer_nsu
+        self.acquirer_auth_code = acquirer_auth_code
+        self.operation_type = operation_type
+        self.card = card
+        self.acquirer_message = acquirer_message
+        self.acquirer_return_code = acquirer_return_code
+        self.installments = installments
+        self.threed_authentication_url = threed_authentication_url
+        self.funding_source = funding_source
+
+        # Call the constructor for the base class
+        super(GetCreditCardTransactionResponse, self).__init__(gateway_id,
+                                                               amount,
+                                                               status,
+                                                               success,
+                                                               created_at,
+                                                               updated_at,
+                                                               attempt_count,
+                                                               max_attempts,
+                                                               splits,
+                                                               id,
+                                                               gateway_response,
+                                                               antifraud_response,
+                                                               split,
+                                                               next_attempt,
+                                                               transaction_type,
+                                                               metadata,
+                                                               interest,
+                                                               fine,
+                                                               max_days_to_pay_past_due)
+
+
+    @classmethod
+    def from_dictionary(cls,
+                        dictionary):
+        """Creates an instance of this model from a dictionary
+
+        Args:
+            dictionary (dictionary): A dictionary representation of the object as
+            obtained from the deserialization of the server's response. The keys
+            MUST match property names in the API description.
+
+        Returns:
+            object: An instance of this structure class.
+
+        """
+        if dictionary is None:
+            return None
+
+        # Extract variables from the dictionary
+        statement_descriptor = dictionary.get('statement_descriptor')
+        acquirer_name = dictionary.get('acquirer_name')
+        acquirer_affiliation_code = dictionary.get('acquirer_affiliation_code')
+        acquirer_tid = dictionary.get('acquirer_tid')
+        acquirer_nsu = dictionary.get('acquirer_nsu')
+        acquirer_auth_code = dictionary.get('acquirer_auth_code')
+        operation_type = dictionary.get('operation_type')
+        card = pagarmecoreapi.models.get_card_response.GetCardResponse.from_dictionary(dictionary.get('card')) if dictionary.get('card') else None
+        acquirer_message = dictionary.get('acquirer_message')
+        acquirer_return_code = dictionary.get('acquirer_return_code')
+        threed_authentication_url = dictionary.get('threed_authentication_url')
+        gateway_id = dictionary.get('gateway_id')
+        amount = dictionary.get('amount')
+        status = dictionary.get('status')
+        success = dictionary.get('success')
+        created_at = APIHelper.RFC3339DateTime.from_value(dictionary.get("created_at")).datetime if dictionary.get("created_at") else None
+        updated_at = APIHelper.RFC3339DateTime.from_value(dictionary.get("updated_at")).datetime if dictionary.get("updated_at") else None
+        attempt_count = dictionary.get('attempt_count')
+        max_attempts = dictionary.get('max_attempts')
+        splits = None
+        if dictionary.get('splits') != None:
+            splits = list()
+            for structure in dictionary.get('splits'):
+                splits.append(pagarmecoreapi.models.get_split_response.GetSplitResponse.from_dictionary(structure))
+        id = dictionary.get('id')
+        gateway_response = pagarmecoreapi.models.get_gateway_response_response.GetGatewayResponseResponse.from_dictionary(dictionary.get('gateway_response')) if dictionary.get('gateway_response') else None
+        antifraud_response = pagarmecoreapi.models.get_antifraud_response.GetAntifraudResponse.from_dictionary(dictionary.get('antifraud_response')) if dictionary.get('antifraud_response') else None
+        split = None
+        if dictionary.get('split') != None:
+            split = list()
+            for structure in dictionary.get('split'):
+                split.append(pagarmecoreapi.models.get_split_response.GetSplitResponse.from_dictionary(structure))
+        installments = dictionary.get('installments')
+        funding_source = dictionary.get('funding_source')
+        next_attempt = APIHelper.RFC3339DateTime.from_value(dictionary.get("next_attempt")).datetime if dictionary.get("next_attempt") else None
+        transaction_type = dictionary.get('transaction_type')
+        metadata = dictionary.get('metadata')
+        interest = pagarmecoreapi.models.get_interest_response.GetInterestResponse.from_dictionary(dictionary.get('interest')) if dictionary.get('interest') else None
+        fine = pagarmecoreapi.models.get_fine_response.GetFineResponse.from_dictionary(dictionary.get('fine')) if dictionary.get('fine') else None
+        max_days_to_pay_past_due = dictionary.get('max_days_to_pay_past_due')
+
+        # Return an object of this model
+        return cls(statement_descriptor,
+                   acquirer_name,
+                   acquirer_affiliation_code,
+                   acquirer_tid,
+                   acquirer_nsu,
+                   acquirer_auth_code,
+                   operation_type,
+                   card,
+                   acquirer_message,
+                   acquirer_return_code,
+                   threed_authentication_url,
+                   gateway_id,
+                   amount,
+                   status,
+                   success,
+                   created_at,
+                   updated_at,
+                   attempt_count,
+                   max_attempts,
+                   splits,
+                   id,
+                   gateway_response,
+                   antifraud_response,
+                   split,
+                   installments,
+                   funding_source,
+                   next_attempt,
+                   transaction_type,
+                   metadata,
+                   interest,
+                   fine,
+                   max_days_to_pay_past_due)
 
 

@@ -19,7 +19,7 @@ class GetAnticipationResponse(object):
         id (string): Id
         requested_amount (int): Requested amount
         approved_amount (int): Approved amount
-        recipient (GetRecipientResponse): Recipient
+        recipient (GetRecipientResponse): Recipient response
         pgid (string): Anticipation id on the gateway
         created_at (datetime): Creation date
         updated_at (datetime): Last update date

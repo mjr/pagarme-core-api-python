@@ -26,20 +26,24 @@ class GetOrderResponse(object):
         code (string): TODO: type description here.
         currency (string): TODO: type description here.
         items (list of GetOrderItemResponse): TODO: type description here.
-        customer (GetCustomerResponse): TODO: type description here.
+        customer (GetCustomerResponse): Response object for getting a
+            customer
         status (string): TODO: type description here.
         created_at (datetime): TODO: type description here.
         updated_at (datetime): TODO: type description here.
         charges (list of GetChargeResponse): TODO: type description here.
         invoice_url (string): TODO: type description here.
-        shipping (GetShippingResponse): TODO: type description here.
+        shipping (GetShippingResponse): Response object for getting the
+            shipping data
         metadata (dict<object, string>): TODO: type description here.
         checkouts (list of GetCheckoutPaymentResponse): Checkout Payment
             Settings Response
         ip (string): Ip address
         session_id (string): Session id
-        location (GetLocationResponse): Location
-        device (GetDeviceResponse): Device's informations
+        location (GetLocationResponse): Response object for geetting an order
+            location request
+        device (GetDeviceResponse): Response object for geetting an order
+            device
         closed (bool): Indicates whether the order is closed
 
     """

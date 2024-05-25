@@ -10,6 +10,7 @@ from pagarmecoreapi.api_helper import APIHelper
 from pagarmecoreapi.configuration import Configuration
 from pagarmecoreapi.controllers.base_controller import BaseController
 from pagarmecoreapi.models.get_token_response import GetTokenResponse
+from pagarmecoreapi.exceptions.error_exception import ErrorException
 
 class TokensController(BaseController):
 
@@ -18,17 +19,19 @@ class TokensController(BaseController):
 
     def create_token(self,
                      public_key,
-                     request,
-                     idempotency_key=None):
-        """Does a POST request to /tokens?appId={public_key}.
+                     body,
+                     idempotency_key=None,
+                     app_id=None):
+        """Does a POST request to /tokens.
 
-        TODO: type endpoint description here.
+        CreateToken
 
         Args:
             public_key (string): Public key
-            request (CreateTokenRequest): Request for creating a token
+            body (CreateTokenRequest): Request for creating a token
             idempotency_key (string, optional): TODO: type description here.
                 Example: 
+            app_id (string, optional): TODO: type description here. Example: 
 
         Returns:
             GetTokenResponse: Response from the API. 
@@ -42,24 +45,44 @@ class TokensController(BaseController):
         """
 
         # Prepare query URL
-        _url_path = '/tokens?appId={public_key}'
+        _url_path = '/tokens'
         _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
             'public_key': public_key
         })
         _query_builder = Configuration.base_uri
         _query_builder += _url_path
+        _query_parameters = {
+            'appId': app_id
+        }
+        _query_builder = APIHelper.append_url_with_query_parameters(_query_builder,
+            _query_parameters, Configuration.array_serialization)
         _query_url = APIHelper.clean_url(_query_builder)
 
         # Prepare headers
         _headers = {
             'accept': 'application/json',
-            'content-type': 'application/json; charset=utf-8',
+            'ServiceRefererName': Configuration.service_referer_name,
+            'Content-Type': 'application/json',
             'idempotency-key': idempotency_key
         }
 
         # Prepare and execute request
-        _request = self.http_client.post(_query_url, headers=_headers, parameters=APIHelper.json_serialize(request))
+        _request = self.http_client.post(_query_url, headers=_headers, parameters=APIHelper.json_serialize(body))
         _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
         self.validate_response(_context)
 
         # Return appropriate type
@@ -67,14 +90,16 @@ class TokensController(BaseController):
 
     def get_token(self,
                   id,
-                  public_key):
-        """Does a GET request to /tokens/{id}?appId={public_key}.
+                  public_key,
+                  app_id=None):
+        """Does a GET request to /tokens/{id}.
 
         Gets a token from its id
 
         Args:
             id (string): Token id
             public_key (string): Public key
+            app_id (string, optional): TODO: type description here. Example: 
 
         Returns:
             GetTokenResponse: Response from the API. 
@@ -88,23 +113,43 @@ class TokensController(BaseController):
         """
 
         # Prepare query URL
-        _url_path = '/tokens/{id}?appId={public_key}'
+        _url_path = '/tokens/{id}'
         _url_path = APIHelper.append_url_with_template_parameters(_url_path, { 
             'id': id,
             'public_key': public_key
         })
         _query_builder = Configuration.base_uri
         _query_builder += _url_path
+        _query_parameters = {
+            'appId': app_id
+        }
+        _query_builder = APIHelper.append_url_with_query_parameters(_query_builder,
+            _query_parameters, Configuration.array_serialization)
         _query_url = APIHelper.clean_url(_query_builder)
 
         # Prepare headers
         _headers = {
-            'accept': 'application/json'
+            'accept': 'application/json',
+            'ServiceRefererName': Configuration.service_referer_name
         }
 
         # Prepare and execute request
         _request = self.http_client.get(_query_url, headers=_headers)
         _context = self.execute_request(_request)
+
+        # Endpoint and global error handling using HTTP status codes.
+        if _context.response.status_code == 400:
+            raise ErrorException('Invalid request', _context)
+        elif _context.response.status_code == 401:
+            raise ErrorException('Invalid API key', _context)
+        elif _context.response.status_code == 404:
+            raise ErrorException('An informed resource was not found', _context)
+        elif _context.response.status_code == 412:
+            raise ErrorException('Business validation error', _context)
+        elif _context.response.status_code == 422:
+            raise ErrorException('Contract validation error', _context)
+        elif _context.response.status_code == 500:
+            raise ErrorException('Internal server error', _context)
         self.validate_response(_context)
 
         # Return appropriate type

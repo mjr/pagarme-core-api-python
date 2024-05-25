@@ -19,7 +19,8 @@ class GetCheckoutPaymentSettingsResponse(object):
         payment_url (string): Payment Url
         accepted_payment_methods (list of string): Accepted Payment Methods
         status (string): Status
-        customer (GetCustomerResponse): Customer
+        customer (GetCustomerResponse): Response object for getting a
+            customer
         amount (int): Payment amount
         default_payment_method (string): Default Payment Method
         gateway_affiliation_id (string): Gateway Affiliation Id

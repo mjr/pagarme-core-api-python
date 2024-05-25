@@ -33,7 +33,8 @@ class CreatePlanRequest(object):
         billing_days (list of int): Allowed billings days for the
             subscription, in case the plan type is 'exact_day'
         billing_type (string): Billing type
-        pricing_scheme (CreatePricingSchemeRequest): Plan's pricing scheme
+        pricing_scheme (CreatePricingSchemeRequest): Request for creating a
+            pricing scheme
         metadata (dict<object, string>): Metadata
         minimum_price (int): Minimum price that will be charged
         cycles (int): Number of cycles

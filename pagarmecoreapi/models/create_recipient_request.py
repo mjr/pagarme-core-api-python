@@ -21,10 +21,11 @@ class CreateRecipientRequest(object):
         description (string): Recipient description
         document (string): Recipient document number
         mtype (string): Recipient type
-        default_bank_account (CreateBankAccountRequest): Bank account
+        default_bank_account (CreateBankAccountRequest): Request for creating
+            a bank account
         metadata (dict<object, string>): Metadata
-        transfer_settings (CreateTransferSettingsRequest): Receiver Transfer
-            Information
+        transfer_settings (CreateTransferSettingsRequest): Informações de
+            transferência do recebedor
         code (string): Recipient code
         payment_mode (string): Payment mode
 
@@ -53,7 +54,7 @@ class CreateRecipientRequest(object):
                  default_bank_account=None,
                  metadata=None,
                  code=None,
-                 payment_mode='bank_transfer',
+                 payment_mode=None,
                  transfer_settings=None):
         """Constructor for the CreateRecipientRequest class"""
 
@@ -96,7 +97,7 @@ class CreateRecipientRequest(object):
         default_bank_account = pagarmecoreapi.models.create_bank_account_request.CreateBankAccountRequest.from_dictionary(dictionary.get('default_bank_account')) if dictionary.get('default_bank_account') else None
         metadata = dictionary.get('metadata')
         code = dictionary.get('code')
-        payment_mode = dictionary.get("payment_mode") if dictionary.get("payment_mode") else 'bank_transfer'
+        payment_mode = dictionary.get('payment_mode')
         transfer_settings = pagarmecoreapi.models.create_transfer_settings_request.CreateTransferSettingsRequest.from_dictionary(dictionary.get('transfer_settings')) if dictionary.get('transfer_settings') else None
 
         # Return an object of this model

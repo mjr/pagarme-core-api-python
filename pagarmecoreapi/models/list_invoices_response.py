@@ -17,7 +17,8 @@ class ListInvoicesResponse(object):
 
     Attributes:
         data (list of GetInvoiceResponse): The Invoice objects
-        paging (PagingResponse): Paging object
+        paging (PagingResponse): Object used for returning lists of objects
+            with pagination
 
     """
 

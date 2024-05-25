@@ -17,7 +17,8 @@ class ListAccessTokensResponse(object):
 
     Attributes:
         data (list of GetAccessTokenResponse): The access token objects
-        paging (PagingResponse): Paging object
+        paging (PagingResponse): Object used for returning lists of objects
+            with pagination
 
     """
 

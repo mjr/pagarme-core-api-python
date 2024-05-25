@@ -17,7 +17,8 @@ class CreateSubscriptionItemRequest(object):
 
     Attributes:
         description (string): Item description
-        pricing_scheme (CreatePricingSchemeRequest): Pricing scheme
+        pricing_scheme (CreatePricingSchemeRequest): Request for creating a
+            pricing scheme
         id (string): Item id
         plan_item_id (string): Plan item id
         discounts (list of CreateDiscountRequest): Discounts for the item

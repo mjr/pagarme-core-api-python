@@ -25,6 +25,9 @@ class Configuration(object):
     # The base Uri for API calls
     base_uri = 'https://api.pagar.me/core/v5'
 
+    # TODO: Set an appropriate value
+    service_referer_name = None
+
     # The username to use with basic authentication
     # TODO: Set an appropriate value
     basic_auth_user_name = None

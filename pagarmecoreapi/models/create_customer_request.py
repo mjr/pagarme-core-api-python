@@ -21,7 +21,7 @@ class CreateCustomerRequest(object):
         document (string): Document number. Only numbers, no special
             characters.
         mtype (string): Person type. Can be either 'individual' or 'company'
-        address (CreateAddressRequest): The customer's address
+        address (CreateAddressRequest): Request for creating a new Address
         metadata (dict<object, string>): Metadata
         phones (CreatePhonesRequest): TODO: type description here.
         code (string): Customer code

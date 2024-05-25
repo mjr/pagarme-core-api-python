@@ -19,14 +19,16 @@ class CreateDebitCardPaymentRequest(object):
     Attributes:
         statement_descriptor (string): The text that will be shown on the
             debit card's statement
-        card (CreateCardRequest): Debit card data
+        card (CreateCardRequest): Card data
         card_id (string): The debit card id
         card_token (string): The debit card token
         recurrence (bool): Indicates a recurrence
         authentication (CreatePaymentAuthenticationRequest): The payment
             authentication request
-        token (CreateCardPaymentContactlessRequest): The Debit card payment
-            token request
+        token (CreateCardPaymentContactlessRequest): The card payment
+            contactless request
+        recurrency_cycle (string): Defines whether the card has been used one
+            or more times.
 
     """
 
@@ -38,7 +40,8 @@ class CreateDebitCardPaymentRequest(object):
         "card_token":'card_token',
         "recurrence":'recurrence',
         "authentication":'authentication',
-        "token":'token'
+        "token":'token',
+        "recurrency_cycle":'recurrency_cycle'
     }
 
     def __init__(self,
@@ -48,7 +51,8 @@ class CreateDebitCardPaymentRequest(object):
                  card_token=None,
                  recurrence=None,
                  authentication=None,
-                 token=None):
+                 token=None,
+                 recurrency_cycle=None):
         """Constructor for the CreateDebitCardPaymentRequest class"""
 
         # Initialize members of the class
@@ -59,6 +63,7 @@ class CreateDebitCardPaymentRequest(object):
         self.recurrence = recurrence
         self.authentication = authentication
         self.token = token
+        self.recurrency_cycle = recurrency_cycle
 
 
     @classmethod
@@ -86,6 +91,7 @@ class CreateDebitCardPaymentRequest(object):
         recurrence = dictionary.get('recurrence')
         authentication = pagarmecoreapi.models.create_payment_authentication_request.CreatePaymentAuthenticationRequest.from_dictionary(dictionary.get('authentication')) if dictionary.get('authentication') else None
         token = pagarmecoreapi.models.create_card_payment_contactless_request.CreateCardPaymentContactlessRequest.from_dictionary(dictionary.get('token')) if dictionary.get('token') else None
+        recurrency_cycle = dictionary.get('recurrency_cycle')
 
         # Return an object of this model
         return cls(statement_descriptor,
@@ -94,6 +100,7 @@ class CreateDebitCardPaymentRequest(object):
                    card_token,
                    recurrence,
                    authentication,
-                   token)
+                   token,
+                   recurrency_cycle)
 
 
